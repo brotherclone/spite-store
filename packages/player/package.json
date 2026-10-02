@@ -7,7 +7,8 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    }
+    },
+    "./worklet.js": "./dist/worklet.js"
   },
   "files": [
     "dist"
@@ -15,6 +16,9 @@
   "scripts": {
     "build": "tsdown",
     "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@spite-store/engine": "workspace:*"
   },
   "dependencies": {}
 }

@@ -92,15 +92,19 @@ export function createRenderState(): RenderState {
 }
 
 /**
- * Renders up to `frames` frames from `state.frame`. Each output frame depends only on its absolute
- * position, and voices are summed in plan order, so any block size gives identical samples.
+ * Renders up to `frames` frames from `state.frame` into caller-owned buffers (which must hold at
+ * least `frames` values; only the first `length` are written) and returns the new state. Each
+ * output frame depends only on its absolute position, and voices are summed in plan order in
+ * doubles, so any block size gives identical samples. Allocates nothing.
  */
-export function renderBlock(
+export function renderBlockInto(
   plan: RenderPlan,
   stems: ReadonlyMap<string, Stem>,
   state: RenderState,
   frames: number,
-): RenderBlock {
+  left: Float64Array,
+  right: Float64Array,
+): RenderState {
   if (state.v !== RENDER_STATE_VERSION)
     throw new Error(`Unsupported render state version ${String(state.v)}`);
   if (!Number.isSafeInteger(frames) || frames < 0)
@@ -108,10 +112,14 @@ export function renderBlock(
   const from = state.frame;
   const to = Math.min(from + frames, plan.totalFrames);
   const length = Math.max(0, to - from);
-  const left = new Float64Array(length);
-  const right = new Float64Array(length);
+  if (left.length < length || right.length < length)
+    throw new RangeError(`Output buffers hold fewer than ${length} frames`);
+  left.fill(0, 0, length);
+  right.fill(0, 0, length);
 
   for (const voice of plan.voices) {
+    // Voices are in trace order, so start frames never decrease: nothing later can overlap.
+    if (voice.start >= to) break;
     const a = Math.max(from, voice.start);
     const b = Math.min(to, voice.end);
     if (a >= b) continue;
@@ -131,7 +139,24 @@ export function renderBlock(
       right[j] = right[j]! + r[i]! * g;
     }
   }
-  return { left, right, state: { v: RENDER_STATE_VERSION, frame: from + length } };
+  return { v: RENDER_STATE_VERSION, frame: from + length };
+}
+
+/** Like `renderBlockInto`, but allocates and returns exactly-sized buffers. */
+export function renderBlock(
+  plan: RenderPlan,
+  stems: ReadonlyMap<string, Stem>,
+  state: RenderState,
+  frames: number,
+): RenderBlock {
+  const length = Math.max(
+    0,
+    Math.min(state.frame + Math.max(0, frames), plan.totalFrames) - state.frame,
+  );
+  const left = new Float64Array(length);
+  const right = new Float64Array(length);
+  const next = renderBlockInto(plan, stems, state, frames, left, right);
+  return { left, right, state: next };
 }
 
 /** Renders a whole plan in one pass. */

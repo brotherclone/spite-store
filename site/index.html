@@ -3,10 +3,34 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Spite Store</title>
+    <title>Spite Store · Placeholder</title>
+    <style>
+      body {
+        font:
+          15px system-ui,
+          sans-serif;
+        max-width: 960px;
+        margin: 40px auto;
+        padding: 0 16px;
+        color: #222;
+      }
+      h1 {
+        font-size: 20px;
+        margin: 0 0 4px;
+      }
+      p {
+        color: #666;
+        margin: 0 0 20px;
+      }
+    </style>
   </head>
   <body>
-    <spite-player></spite-player>
+    <h1>Placeholder</h1>
+    <p>
+      Every seed is a different performance, and the same seed is the same performance anywhere.
+    </p>
+    <!-- seed and bars come from the page URL (?seed=…&bars=…); see src/main.ts -->
+    <spite-player src="/pieces/placeholder/manifest.json" stems="/stems/"></spite-player>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

@@ -80,7 +80,7 @@ export async function auditionCommand(argv: string[]): Promise<number> {
   for (const r of renders) {
     left.set(r.left, offset);
     right.set(r.right, offset);
-    const summary = sectionSummary(r.take.bars, r.take.endBar, bars);
+    const summary = sectionSummary(r.take.visits, r.take.endBar, bars);
     console.log(
       `  ${clock(offset)}  seed ${JSON.stringify(r.take.seed)}  ${r.take.events.length} events  ${summary}`,
     );
