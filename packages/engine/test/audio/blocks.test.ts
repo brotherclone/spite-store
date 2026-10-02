@@ -7,6 +7,7 @@ import {
   realizeForRender,
   renderAll,
   renderBlock,
+  renderBlockInto,
   type Manifest,
   type RenderState,
 } from '../../src/index.js';
@@ -61,5 +62,45 @@ describe('block rendering', () => {
       }),
     );
     expect(hashes.size).toBe(1);
+  });
+});
+
+describe('renderBlockInto', () => {
+  it('fills reused 128-frame buffers with exactly the one-pass samples', () => {
+    const m = loadExample('minimal.json');
+    const { events, endBar } = realizeForRender(m, 7, { durationBars: 16 });
+    const stems = rampStems(m);
+    const plan = planRender(m, events, endBar, stems);
+    const whole = renderAll(plan, stems);
+    const l = new Float64Array(128);
+    const r = new Float64Array(128);
+    let state = createRenderState();
+    let mismatch = -1;
+    while (state.frame < plan.totalFrames && mismatch < 0) {
+      const from = state.frame;
+      state = renderBlockInto(plan, stems, state, 128, l, r);
+      for (let i = 0; i < state.frame - from; i++) {
+        if (l[i] !== whole.left[from + i] || r[i] !== whole.right[from + i]) mismatch = from + i;
+      }
+    }
+    expect(mismatch).toBe(-1);
+    expect(state.frame).toBe(plan.totalFrames);
+  });
+
+  it('rejects buffers that are too small', () => {
+    const m = loadExample('minimal.json');
+    const { events, endBar } = realizeForRender(m, 7, { durationBars: 4 });
+    const stems = rampStems(m);
+    const plan = planRender(m, events, endBar, stems);
+    expect(() =>
+      renderBlockInto(
+        plan,
+        stems,
+        createRenderState(),
+        128,
+        new Float64Array(64),
+        new Float64Array(64),
+      ),
+    ).toThrow(RangeError);
   });
 });

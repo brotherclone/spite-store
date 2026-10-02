@@ -21,6 +21,7 @@ Common scripts, all run from the repo root:
 | ------------------------ | ---------------------------------------------------------------------- |
 | `pnpm build`             | Build `packages/*` (engine, player, cli) into `dist/`                  |
 | `pnpm test`              | Run all Vitest projects (build first: some tests use `dist/`)          |
+| `pnpm test:browser`      | Build, then run the player's real-browser tests (see below)            |
 | `pnpm lint`              | ESLint, including the engine's determinism restrictions                |
 | `pnpm typecheck`         | `tsc` in every package                                                 |
 | `pnpm format`            | Prettier, writing changes (`pnpm format:check` to only check)          |
@@ -41,16 +42,37 @@ pnpm exec spite audition pieces/placeholder/manifest.json    # 4 seeds, 16 bars 
 
 See `packages/cli/README.md` for `realize`, `bounce` and `audition`.
 
+In the browser, the site serves the placeholder piece with `<spite-player>`:
+
+```sh
+pnpm build
+pnpm stems:placeholder
+pnpm --filter site dev     # then open http://localhost:5173/?seed=hello&bars=16
+```
+
+The URL is a permalink: the same `seed` and `bars` always play the same performance. See
+`packages/player/README.md` for embedding the player elsewhere.
+
+## Browser tests
+
+`pnpm test:browser` checks, in headless Chromium, Firefox and WebKit, that the player's audio is
+bit-identical to the Node renderer and that the element behaves as specified. It is kept out of
+`pnpm test`. Run this once first (about 500 MB of browser downloads):
+
+```sh
+pnpm exec playwright install chromium firefox webkit
+```
+
 ## Layout
 
 ```
 schema/            Music manifest JSON Schema (v0.1), examples/{valid,invalid}, CHANGELOG
 packages/engine    Pure TypeScript realization engine: no DOM, zero runtime dependencies
-packages/player    <spite-player> web component (stub)
+packages/player    <spite-player> web component (AudioWorklet + canvas lanes view)
 packages/cli       `spite` CLI: validate (audition / bounce / pack are stubs)
 fixtures/golden/   Golden trace snapshots
 pieces/            Authored pieces (manifests only); pieces/placeholder for development
-site/              Vite site (stub)
+site/              Vite page for the placeholder piece, with seed permalinks
 openspec/          Behavioral specs and change proposals (OpenSpec)
 ```
 
