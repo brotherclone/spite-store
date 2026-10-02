@@ -14,7 +14,7 @@
 ## 3. Element and UI
 
 - [x] 3.1 Implement `<spite-player>` attributes and lifecycle (D7): `src`, `stems`, `seed`, `bars`, reload on change, the `bars` validation error, the random pronounceable seed reflected to the attribute, and `seedchange`/`ended`/`error` events. Verify with browser tests in group 4.
-- [ ] 3.2 Implement controls in shadow DOM: play/pause, seed field, reroll, bars field, scrub bar, copy link, status line with progress and errors, `part` names and CSS custom properties. Verify keyboard operation manually, and copy link and reroll through browser tests.
+- [x] 3.2 Implement controls in shadow DOM: play/pause, seed field, reroll, bars field, scrub bar, copy link, status line with progress and errors, `part` names and CSS custom properties. Verify keyboard operation manually, and copy link and reroll through browser tests.
 - [x] 3.3 Implement the canvas structure view (D7): section band, sorted slot rows, body and tail blocks with clip labels, DPR-aware resize, playhead animation, click-to-seek. Verify with a browser test that block and row counts match the plan and a click at bar 5 seeks to bar 5's frame.
 
 ## 4. Browser tests
@@ -31,4 +31,4 @@
 ## 6. Docs and integration
 
 - [x] 6.1 Write `packages/player/README.md` (embed snippet, attributes, events, parts and custom properties, what the determinism promise covers) and update the root README (site dev loop, `test:browser` and the one-time `playwright install`). Verify the embed snippet works as written in the dev site.
-- [ ] 6.2 From a clean checkout on Node 24, run `pnpm install && pnpm build && pnpm stems:placeholder && pnpm lint && pnpm typecheck && pnpm format:check && pnpm test && pnpm test:browser`. Verify everything passes, no audio file is tracked, and `openspec validate player-v0 --strict` passes. Do a manual listen in Safari if available.
+- [x] 6.2 From a clean checkout on Node 24, run `pnpm install && pnpm build && pnpm stems:placeholder && pnpm lint && pnpm typecheck && pnpm format:check && pnpm test && pnpm test:browser`. Verify everything passes, no audio file is tracked, and `openspec validate player-v0 --strict` passes. Do a manual listen in Safari if available.
