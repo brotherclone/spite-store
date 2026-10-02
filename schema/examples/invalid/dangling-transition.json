@@ -1,0 +1,190 @@
+{
+  "$schema": "../../manifest.schema.json",
+  "specVersion": "0.1",
+  "id": "dangling-transition",
+  "title": "Minimal",
+  "tempo": [
+    {
+      "bar": 0,
+      "bpm": 90,
+      "meter": [4, 4]
+    }
+  ],
+  "clips": {
+    "kick-a": {
+      "hash": "sha256:81589fa7016dc920f811c422cc95e7bffc3e7c246464c179fbc0b38609782d3e",
+      "lengthBars": 1,
+      "gain": 0.9
+    },
+    "kick-b": {
+      "hash": "sha256:d15c95eeb3e971611b7126a6581864d05da3635b365971bab54ec23c20d49453",
+      "lengthBars": 2,
+      "excludes": ["bass-b"]
+    },
+    "bass-a": {
+      "hash": "sha256:ba2359d0a7b0a9f3013dd815520fe6cfa6df3a3fbead550f6f7b4c14902baec6",
+      "lengthBars": 2,
+      "gain": 0.8
+    },
+    "bass-b": {
+      "hash": "sha256:ab88658f4869ce5cfd200785b379cb1a4f7d34dccadf0f354ddff01dcdc3adac",
+      "lengthBars": 4
+    },
+    "pad-a": {
+      "hash": "sha256:e15b72f58cc1fa77358a5cbebafbd94401e15a0f641fef4e8cebe933e7ae1507",
+      "lengthBars": 4,
+      "gain": 0.6
+    },
+    "pad-b": {
+      "hash": "sha256:0a2c616dbaa29c9a2e7dbab4949d78a17f46021e4a8dbcbe7f16e416d3cb9adc",
+      "lengthBars": 8,
+      "gain": 0.5
+    }
+  },
+  "start": "intro",
+  "sections": [
+    {
+      "id": "intro",
+      "lengthBars": 4,
+      "maxVisits": 2,
+      "slots": [
+        {
+          "id": "pad",
+          "enter": 1,
+          "gain": 1,
+          "pool": [
+            {
+              "clip": "pad-a",
+              "weight": 1
+            }
+          ]
+        },
+        {
+          "id": "drums",
+          "enter": 0.5,
+          "gain": 0.8,
+          "noRepeat": 1,
+          "pool": [
+            {
+              "clip": "kick-a",
+              "weight": 1
+            },
+            {
+              "clip": "kick-b",
+              "weight": 1
+            }
+          ]
+        }
+      ],
+      "next": [
+        {
+          "to": "verse",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "id": "verse",
+      "lengthBars": 8,
+      "maxVisits": 4,
+      "slots": [
+        {
+          "id": "drums",
+          "enter": 0.9,
+          "noRepeat": 1,
+          "pool": [
+            {
+              "clip": "kick-a",
+              "weight": 2
+            },
+            {
+              "clip": "kick-b",
+              "weight": 1
+            }
+          ]
+        },
+        {
+          "id": "bass",
+          "enter": 0.8,
+          "gain": 0.9,
+          "pool": [
+            {
+              "clip": "bass-a",
+              "weight": 1
+            },
+            {
+              "clip": "bass-b",
+              "weight": 1
+            }
+          ]
+        },
+        {
+          "id": "pad",
+          "enter": 0.6,
+          "noRepeat": 1,
+          "pool": [
+            {
+              "clip": "pad-a",
+              "weight": 1
+            },
+            {
+              "clip": "pad-b",
+              "weight": 1
+            }
+          ]
+        }
+      ],
+      "next": [
+        {
+          "to": "verse",
+          "weight": 1
+        },
+        {
+          "to": "bridge",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "id": "bridge",
+      "lengthBars": 4,
+      "maxVisits": 3,
+      "slots": [
+        {
+          "id": "bass",
+          "pool": [
+            {
+              "clip": "bass-b",
+              "weight": 1
+            },
+            {
+              "clip": "bass-a",
+              "weight": 3
+            }
+          ]
+        },
+        {
+          "id": "pad",
+          "enter": 0.7,
+          "pool": [
+            {
+              "clip": "pad-a",
+              "weight": 1
+            }
+          ]
+        }
+      ],
+      "next": [
+        {
+          "to": "verse",
+          "weight": 2
+        },
+        {
+          "to": "coda",
+          "weight": 1
+        }
+      ]
+    }
+  ],
+  "$comment": "bridge transitions to a section that does not exist. Expected pointer: /sections/2/next/1/to"
+}

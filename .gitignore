@@ -12,3 +12,18 @@ yarn-error.log*
 .DS_Store
 # JetBrains
 .idea/
+
+# Build output
+dist/
+coverage/
+*.tsbuildinfo
+
+# Audio is never committed (manifests reference stems by sha256)
+*.wav
+*.aif
+*.aiff
+*.flac
+*.mp3
+*.ogg
+*.opus
+*.m4a

@@ -1,0 +1,7 @@
+dist/
+coverage/
+pnpm-lock.yaml
+openspec/
+.claude/
+.idea/
+fixtures/golden/

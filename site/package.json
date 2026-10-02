@@ -1,0 +1,17 @@
+{
+  "name": "@spite-store/site",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@spite-store/player": "workspace:*"
+  },
+  "devDependencies": {
+    "vite": "^8.3.2"
+  }
+}

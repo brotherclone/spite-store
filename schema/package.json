@@ -1,0 +1,16 @@
+{
+  "name": "@spite-store/schema",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./manifest.schema.json",
+    "./manifest.schema.json": "./manifest.schema.json",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "manifest.schema.json",
+    "examples",
+    "CHANGELOG.md"
+  ]
+}

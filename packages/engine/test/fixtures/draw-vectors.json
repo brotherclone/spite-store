@@ -1,0 +1,104 @@
+[
+  {
+    "seed": 0,
+    "path": [],
+    "index": 0,
+    "value": 3908999035
+  },
+  {
+    "seed": 0,
+    "path": ["p"],
+    "index": 0,
+    "value": 2770770913
+  },
+  {
+    "seed": 0,
+    "path": ["p"],
+    "index": 1,
+    "value": 3213517651
+  },
+  {
+    "seed": 0,
+    "path": ["p"],
+    "index": 3,
+    "value": 2640939938
+  },
+  {
+    "seed": 0,
+    "path": ["p"],
+    "index": 4,
+    "value": 3181237655
+  },
+  {
+    "seed": 0,
+    "path": ["p"],
+    "index": 1000,
+    "value": 2169382215
+  },
+  {
+    "seed": 42,
+    "path": ["v", 0, "next"],
+    "index": 0,
+    "value": 2110603284
+  },
+  {
+    "seed": "42",
+    "path": ["v", 0, "next"],
+    "index": 1,
+    "value": 290720183
+  },
+  {
+    "seed": "spite-store",
+    "path": ["v", 3, "s", "drums", "enter"],
+    "index": 0,
+    "value": 3595168266
+  },
+  {
+    "seed": "spite-store",
+    "path": ["v", 3, "s", "drums", "pick", 2],
+    "index": 0,
+    "value": 1871738832
+  },
+  {
+    "seed": "",
+    "path": ["x"],
+    "index": 0,
+    "value": 1249981219
+  },
+  {
+    "seed": "音楽",
+    "path": ["🎹", 7],
+    "index": 2,
+    "value": 3847379040
+  },
+  {
+    "seed": 9007199254740991,
+    "path": [9007199254740991],
+    "index": 5,
+    "value": 2700082061
+  },
+  {
+    "seed": 7,
+    "path": ["a", "b"],
+    "index": 0,
+    "value": 853353066
+  },
+  {
+    "seed": 7,
+    "path": ["ab"],
+    "index": 0,
+    "value": 368004099
+  },
+  {
+    "seed": 7,
+    "path": ["1"],
+    "index": 0,
+    "value": 1500077980
+  },
+  {
+    "seed": 7,
+    "path": [1],
+    "index": 0,
+    "value": 37763924
+  }
+]

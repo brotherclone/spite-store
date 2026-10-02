@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "manifest.schema.json",
+  "title": "Spite Store music manifest",
+  "description": "Describes an aleatoric piece: its clips (by content hash), sections, slots and transitions. Semantic rules the schema cannot express (references, uniqueness, ordering) are enforced by checkManifest() in @spite-store/engine.",
+  "type": "object",
+  "required": ["specVersion", "id", "title", "tempo", "clips", "start", "sections"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "$comment": { "type": "string" },
+    "specVersion": { "const": "0.1" },
+    "id": { "$ref": "#/$defs/id" },
+    "title": { "type": "string", "minLength": 1 },
+    "tempo": {
+      "description": "Tempo map. Starts at bar 0; bars strictly increase.",
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/tempoEntry" }
+    },
+    "clips": {
+      "description": "Clip catalogue keyed by clip id.",
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "$ref": "#/$defs/id" },
+      "additionalProperties": { "$ref": "#/$defs/clip" }
+    },
+    "start": { "$ref": "#/$defs/id" },
+    "sections": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/section" }
+    },
+    "envelope": {
+      "description": "Piecewise-linear form envelope over piece progress (0-1). Scales slot entry probability.",
+      "type": "array",
+      "minItems": 2,
+      "items": { "$ref": "#/$defs/breakpoint" }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+    },
+    "unit": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "tempoEntry": {
+      "type": "object",
+      "required": ["bar", "bpm", "meter"],
+      "additionalProperties": false,
+      "properties": {
+        "bar": { "type": "integer", "minimum": 0 },
+        "bpm": { "type": "number", "exclusiveMinimum": 0 },
+        "meter": {
+          "description": "[beats, unit]",
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "prefixItems": [
+            { "type": "integer", "minimum": 1 },
+            { "type": "integer", "enum": [1, 2, 4, 8, 16, 32, 64] }
+          ],
+          "items": false
+        }
+      }
+    },
+    "clip": {
+      "type": "object",
+      "required": ["hash", "lengthBars"],
+      "additionalProperties": false,
+      "properties": {
+        "hash": {
+          "description": "sha256 of the audio file's bytes.",
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "lengthBars": { "type": "integer", "minimum": 1 },
+        "gain": { "type": "number", "minimum": 0, "default": 1 },
+        "excludes": {
+          "description": "Clip ids this clip must never sound alongside. Symmetric.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        }
+      }
+    },
+    "section": {
+      "type": "object",
+      "required": ["id", "lengthBars"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "lengthBars": { "type": "integer", "minimum": 1 },
+        "maxVisits": { "type": "integer", "minimum": 1 },
+        "slots": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/slot" }
+        },
+        "next": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/transition" }
+        }
+      }
+    },
+    "slot": {
+      "type": "object",
+      "required": ["id", "pool"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "enter": { "$ref": "#/$defs/unit", "default": 1 },
+        "gain": { "type": "number", "minimum": 0, "default": 1 },
+        "noRepeat": { "type": "integer", "minimum": 0, "default": 0 },
+        "pool": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/poolEntry" }
+        }
+      }
+    },
+    "poolEntry": {
+      "type": "object",
+      "required": ["clip", "weight"],
+      "additionalProperties": false,
+      "properties": {
+        "clip": { "$ref": "#/$defs/id" },
+        "weight": { "type": "number", "minimum": 0 }
+      }
+    },
+    "transition": {
+      "type": "object",
+      "required": ["to", "weight"],
+      "additionalProperties": false,
+      "properties": {
+        "to": { "$ref": "#/$defs/id" },
+        "weight": { "type": "number", "minimum": 0 }
+      }
+    },
+    "breakpoint": {
+      "type": "object",
+      "required": ["at", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "at": { "$ref": "#/$defs/unit" },
+        "value": { "$ref": "#/$defs/unit" }
+      }
+    }
+  }
+}

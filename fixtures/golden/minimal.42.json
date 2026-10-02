@@ -1,0 +1,331 @@
+{
+  "manifest": "schema/examples/valid/minimal.json",
+  "seed": 42,
+  "durationBars": 64,
+  "traceFormat": 1,
+  "traceHash": "253ed873cd7f4e772bef66e22c1bcf14023d43ef7bda9746c4d711198d0a998f",
+  "trace": [
+    {
+      "bar": 0,
+      "beat": 0,
+      "slot": "drums",
+      "clipHash": "sha256:81589fa7016dc920f811c422cc95e7bffc3e7c246464c179fbc0b38609782d3e",
+      "gain": 0.7200000000000001
+    },
+    {
+      "bar": 0,
+      "beat": 0,
+      "slot": "pad",
+      "clipHash": "sha256:e15b72f58cc1fa77358a5cbebafbd94401e15a0f641fef4e8cebe933e7ae1507",
+      "gain": 0.6
+    },
+    {
+      "bar": 1,
+      "beat": 0,
+      "slot": "drums",
+      "clipHash": "sha256:d15c95eeb3e971611b7126a6581864d05da3635b365971bab54ec23c20d49453",
+      "gain": 0.8
+    },
+    {
+      "bar": 3,
+      "beat": 0,
+      "slot": "drums",
+      "clipHash": "sha256:81589fa7016dc920f811c422cc95e7bffc3e7c246464c179fbc0b38609782d3e",
+      "gain": 0.7200000000000001
+    },
+    {
+      "bar": 4,
+      "beat": 0,
+      "slot": "bass",
+      "clipHash": "sha256:ab88658f4869ce5cfd200785b379cb1a4f7d34dccadf0f354ddff01dcdc3adac",
+      "gain": 0.9
+    },
+    {
+      "bar": 4,
+      "beat": 0,
+      "slot": "drums",
+      "clipHash": "sha256:81589fa7016dc920f811c422cc95e7bffc3e7c246464c179fbc0b38609782d3e",
+      "gain": 0.9
+    },
+    {
+      "bar": 5,
+      "beat": 0,
+      "slot": "drums",
+      "clipHash": "sha256:81589fa7016dc920f811c422cc95e7bffc3e7c246464c179fbc0b38609782d3e",
+      "gain": 0.9
+    },
+    {
+      "bar": 6,
+      "beat": 0,
+      "slot": "drums",
+      "clipHash": "sha256:81589fa7016dc920f811c422cc95e7bffc3e7c246464c179fbc0b38609782d3e",
+      "gain": 0.9
+    },
+    {
+      "bar": 7,
+      "beat": 0,
+      "slot": "drums",
+      "clipHash": "sha256:81589fa7016dc920f811c422cc95e7bffc3e7c246464c179fbc0b38609782d3e",
+      "gain": 0.9
+    },
+    {
+      "bar": 8,
+      "beat": 0,
+      "slot": "bass",
+      "clipHash": "sha256:ab88658f4869ce5cfd200785b379cb1a4f7d34dccadf0f354ddff01dcdc3adac",
+      "gain": 0.9
+    },
+    {
+      "bar": 8,
+      "beat": 0,
+      "slot": "drums",
+      "clipHash": "sha256:81589fa7016dc920f811c422cc95e7bffc3e7c246464c179fbc0b38609782d3e",
+      "gain": 0.9
+    },
+    {
+      "bar": 9,
+      "beat": 0,
+      "slot": "drums",
+      "clipHash": "sha256:81589fa7016dc920f811c422cc95e7bffc3e7c246464c179fbc0b38609782d3e",
+      "gain": 0.9
+    },
+    {
+      "bar": 10,
+      "beat": 0,
+      "slot": "drums",
+      "clipHash": "sha256:81589fa7016dc920f811c422cc95e7bffc3e7c246464c179fbc0b38609782d3e",
+      "gain": 0.9
+    },
+    {
+      "bar": 11,
+      "beat": 0,
+      "slot": "drums",
+      "clipHash": "sha256:81589fa7016dc920f811c422cc95e7bffc3e7c246464c179fbc0b38609782d3e",
+      "gain": 0.9
+    },
+    {
+      "bar": 12,
+      "beat": 0,
+      "slot": "drums",
+      "clipHash": "sha256:d15c95eeb3e971611b7126a6581864d05da3635b365971bab54ec23c20d49453",
+      "gain": 1
+    },
+    {
+      "bar": 14,
+      "beat": 0,
+      "slot": "drums",
+      "clipHash": "sha256:81589fa7016dc920f811c422cc95e7bffc3e7c246464c179fbc0b38609782d3e",
+      "gain": 0.9
+    },
+    {
+      "bar": 15,
+      "beat": 0,
+      "slot": "drums",
+      "clipHash": "sha256:d15c95eeb3e971611b7126a6581864d05da3635b365971bab54ec23c20d49453",
+      "gain": 1
+    },
+    {
+      "bar": 17,
+      "beat": 0,
+      "slot": "drums",
+      "clipHash": "sha256:81589fa7016dc920f811c422cc95e7bffc3e7c246464c179fbc0b38609782d3e",
+      "gain": 0.9
+    },
+    {
+      "bar": 18,
+      "beat": 0,
+      "slot": "drums",
+      "clipHash": "sha256:d15c95eeb3e971611b7126a6581864d05da3635b365971bab54ec23c20d49453",
+      "gain": 1
+    },
+    {
+      "bar": 20,
+      "beat": 0,
+      "slot": "bass",
+      "clipHash": "sha256:ba2359d0a7b0a9f3013dd815520fe6cfa6df3a3fbead550f6f7b4c14902baec6",
+      "gain": 0.7200000000000001
+    },
+    {
+      "bar": 20,
+      "beat": 0,
+      "slot": "drums",
+      "clipHash": "sha256:81589fa7016dc920f811c422cc95e7bffc3e7c246464c179fbc0b38609782d3e",
+      "gain": 0.9
+    },
+    {
+      "bar": 21,
+      "beat": 0,
+      "slot": "drums",
+      "clipHash": "sha256:d15c95eeb3e971611b7126a6581864d05da3635b365971bab54ec23c20d49453",
+      "gain": 1
+    },
+    {
+      "bar": 22,
+      "beat": 0,
+      "slot": "bass",
+      "clipHash": "sha256:ba2359d0a7b0a9f3013dd815520fe6cfa6df3a3fbead550f6f7b4c14902baec6",
+      "gain": 0.7200000000000001
+    },
+    {
+      "bar": 23,
+      "beat": 0,
+      "slot": "drums",
+      "clipHash": "sha256:81589fa7016dc920f811c422cc95e7bffc3e7c246464c179fbc0b38609782d3e",
+      "gain": 0.9
+    },
+    {
+      "bar": 24,
+      "beat": 0,
+      "slot": "bass",
+      "clipHash": "sha256:ab88658f4869ce5cfd200785b379cb1a4f7d34dccadf0f354ddff01dcdc3adac",
+      "gain": 0.9
+    },
+    {
+      "bar": 24,
+      "beat": 0,
+      "slot": "drums",
+      "clipHash": "sha256:81589fa7016dc920f811c422cc95e7bffc3e7c246464c179fbc0b38609782d3e",
+      "gain": 0.9
+    },
+    {
+      "bar": 25,
+      "beat": 0,
+      "slot": "drums",
+      "clipHash": "sha256:81589fa7016dc920f811c422cc95e7bffc3e7c246464c179fbc0b38609782d3e",
+      "gain": 0.9
+    },
+    {
+      "bar": 26,
+      "beat": 0,
+      "slot": "drums",
+      "clipHash": "sha256:81589fa7016dc920f811c422cc95e7bffc3e7c246464c179fbc0b38609782d3e",
+      "gain": 0.9
+    },
+    {
+      "bar": 27,
+      "beat": 0,
+      "slot": "drums",
+      "clipHash": "sha256:81589fa7016dc920f811c422cc95e7bffc3e7c246464c179fbc0b38609782d3e",
+      "gain": 0.9
+    },
+    {
+      "bar": 28,
+      "beat": 0,
+      "slot": "bass",
+      "clipHash": "sha256:ba2359d0a7b0a9f3013dd815520fe6cfa6df3a3fbead550f6f7b4c14902baec6",
+      "gain": 0.7200000000000001
+    },
+    {
+      "bar": 28,
+      "beat": 0,
+      "slot": "drums",
+      "clipHash": "sha256:d15c95eeb3e971611b7126a6581864d05da3635b365971bab54ec23c20d49453",
+      "gain": 1
+    },
+    {
+      "bar": 28,
+      "beat": 0,
+      "slot": "pad",
+      "clipHash": "sha256:0a2c616dbaa29c9a2e7dbab4949d78a17f46021e4a8dbcbe7f16e416d3cb9adc",
+      "gain": 0.5
+    },
+    {
+      "bar": 30,
+      "beat": 0,
+      "slot": "bass",
+      "clipHash": "sha256:ba2359d0a7b0a9f3013dd815520fe6cfa6df3a3fbead550f6f7b4c14902baec6",
+      "gain": 0.7200000000000001
+    },
+    {
+      "bar": 30,
+      "beat": 0,
+      "slot": "drums",
+      "clipHash": "sha256:81589fa7016dc920f811c422cc95e7bffc3e7c246464c179fbc0b38609782d3e",
+      "gain": 0.9
+    },
+    {
+      "bar": 31,
+      "beat": 0,
+      "slot": "drums",
+      "clipHash": "sha256:d15c95eeb3e971611b7126a6581864d05da3635b365971bab54ec23c20d49453",
+      "gain": 1
+    },
+    {
+      "bar": 32,
+      "beat": 0,
+      "slot": "bass",
+      "clipHash": "sha256:ba2359d0a7b0a9f3013dd815520fe6cfa6df3a3fbead550f6f7b4c14902baec6",
+      "gain": 0.7200000000000001
+    },
+    {
+      "bar": 33,
+      "beat": 0,
+      "slot": "drums",
+      "clipHash": "sha256:81589fa7016dc920f811c422cc95e7bffc3e7c246464c179fbc0b38609782d3e",
+      "gain": 0.9
+    },
+    {
+      "bar": 34,
+      "beat": 0,
+      "slot": "bass",
+      "clipHash": "sha256:ba2359d0a7b0a9f3013dd815520fe6cfa6df3a3fbead550f6f7b4c14902baec6",
+      "gain": 0.7200000000000001
+    },
+    {
+      "bar": 34,
+      "beat": 0,
+      "slot": "drums",
+      "clipHash": "sha256:d15c95eeb3e971611b7126a6581864d05da3635b365971bab54ec23c20d49453",
+      "gain": 1
+    },
+    {
+      "bar": 36,
+      "beat": 0,
+      "slot": "bass",
+      "clipHash": "sha256:ba2359d0a7b0a9f3013dd815520fe6cfa6df3a3fbead550f6f7b4c14902baec6",
+      "gain": 0.8
+    },
+    {
+      "bar": 36,
+      "beat": 0,
+      "slot": "pad",
+      "clipHash": "sha256:e15b72f58cc1fa77358a5cbebafbd94401e15a0f641fef4e8cebe933e7ae1507",
+      "gain": 0.6
+    },
+    {
+      "bar": 38,
+      "beat": 0,
+      "slot": "bass",
+      "clipHash": "sha256:ba2359d0a7b0a9f3013dd815520fe6cfa6df3a3fbead550f6f7b4c14902baec6",
+      "gain": 0.8
+    },
+    {
+      "bar": 40,
+      "beat": 0,
+      "slot": "drums",
+      "clipHash": "sha256:81589fa7016dc920f811c422cc95e7bffc3e7c246464c179fbc0b38609782d3e",
+      "gain": 0.7200000000000001
+    },
+    {
+      "bar": 40,
+      "beat": 0,
+      "slot": "pad",
+      "clipHash": "sha256:e15b72f58cc1fa77358a5cbebafbd94401e15a0f641fef4e8cebe933e7ae1507",
+      "gain": 0.6
+    },
+    {
+      "bar": 41,
+      "beat": 0,
+      "slot": "drums",
+      "clipHash": "sha256:d15c95eeb3e971611b7126a6581864d05da3635b365971bab54ec23c20d49453",
+      "gain": 0.8
+    },
+    {
+      "bar": 43,
+      "beat": 0,
+      "slot": "drums",
+      "clipHash": "sha256:81589fa7016dc920f811c422cc95e7bffc3e7c246464c179fbc0b38609782d3e",
+      "gain": 0.7200000000000001
+    }
+  ]
+}
