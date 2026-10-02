@@ -1,21 +1,11 @@
-import { execFile } from 'node:child_process';
 import { readdirSync, writeFileSync } from 'node:fs';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { root, spite } from './helpers.js';
 
-const root = join(import.meta.dirname, '../../..');
-const bin = join(root, 'packages/cli/bin/spite.js');
 const examples = 'schema/examples';
-
-function spite(...args: string[]): Promise<{ code: number; stdout: string; stderr: string }> {
-  return new Promise((resolve) => {
-    execFile(process.execPath, [bin, ...args], { cwd: root }, (error, stdout, stderr) => {
-      resolve({ code: error ? (error.code as number) : 0, stdout, stderr });
-    });
-  });
-}
 
 describe('spite validate', () => {
   it('accepts the minimal manifest', async () => {
@@ -75,7 +65,7 @@ describe('spite validate', () => {
 });
 
 describe('spite stubs and usage', () => {
-  it.each(['audition', 'bounce', 'pack'])('%s is not implemented yet', async (command) => {
+  it.each(['pack'])('%s is not implemented yet', async (command) => {
     const r = await spite(command);
     expect(r.code).toBe(2);
     expect(r.stderr).toContain('not implemented yet');

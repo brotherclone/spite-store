@@ -17,16 +17,29 @@ pnpm install
 
 Common scripts, all run from the repo root:
 
-| Script               | What it does                                                  |
-| -------------------- | ------------------------------------------------------------- |
-| `pnpm build`         | Build `packages/*` (engine, player, cli) into `dist/`         |
-| `pnpm test`          | Run all Vitest projects (build first: some tests use `dist/`) |
-| `pnpm lint`          | ESLint, including the engine's determinism restrictions       |
-| `pnpm typecheck`     | `tsc` in every package                                        |
-| `pnpm format`        | Prettier, writing changes (`pnpm format:check` to only check) |
-| `pnpm golden:update` | Regenerate golden trace snapshots on purpose                  |
+| Script                   | What it does                                                           |
+| ------------------------ | ---------------------------------------------------------------------- |
+| `pnpm build`             | Build `packages/*` (engine, player, cli) into `dist/`                  |
+| `pnpm test`              | Run all Vitest projects (build first: some tests use `dist/`)          |
+| `pnpm lint`              | ESLint, including the engine's determinism restrictions                |
+| `pnpm typecheck`         | `tsc` in every package                                                 |
+| `pnpm format`            | Prettier, writing changes (`pnpm format:check` to only check)          |
+| `pnpm golden:update`     | Regenerate golden trace and audio snapshots on purpose                 |
+| `pnpm stems:placeholder` | Synthesize the placeholder stems into `.stems/` and check their hashes |
 
 `pnpm --filter site build` builds the site stub.
+
+## Hearing a piece
+
+There is no real audio in the repo yet, but the placeholder piece's stems can be synthesized:
+
+```sh
+pnpm build
+pnpm stems:placeholder                                       # writes .stems/<sha256>.wav
+pnpm exec spite audition pieces/placeholder/manifest.json    # 4 seeds, 16 bars each, via afplay
+```
+
+See `packages/cli/README.md` for `realize`, `bounce` and `audition`.
 
 ## Layout
 
@@ -36,7 +49,7 @@ packages/engine    Pure TypeScript realization engine: no DOM, zero runtime depe
 packages/player    <spite-player> web component (stub)
 packages/cli       `spite` CLI: validate (audition / bounce / pack are stubs)
 fixtures/golden/   Golden trace snapshots
-pieces/            Authored pieces (manifests only)
+pieces/            Authored pieces (manifests only); pieces/placeholder for development
 site/              Vite site (stub)
 openspec/          Behavioral specs and change proposals (OpenSpec)
 ```

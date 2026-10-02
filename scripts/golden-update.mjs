@@ -24,3 +24,44 @@ for (const seed of [0, 42, 'spite-store']) {
   writeFileSync(file, JSON.stringify(snapshot, null, 2) + '\n');
   console.log(`${file}  ${traceHash}  (${trace.length} events)`);
 }
+
+// Golden audio: the placeholder piece rendered with stems synthesized in memory.
+const { RENDER_FORMAT, barFrame, decodeWav, renderWav, synthesizeStemWav } =
+  await import('@spite-store/engine');
+const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
+const placeholderPath = 'pieces/placeholder/manifest.json';
+const placeholder = JSON.parse(readFileSync(join(root, placeholderPath), 'utf8'));
+const recipes = JSON.parse(readFileSync(join(root, 'pieces/placeholder/recipes.json'), 'utf8'));
+const stems = new Map();
+for (const [id, recipe] of Object.entries(recipes)) {
+  const bytes = synthesizeStemWav(recipe, id);
+  const hash = `sha256:${sha(bytes)}`;
+  if (placeholder.clips[id].hash !== hash) {
+    throw new Error(
+      `placeholder stem ${id} does not match its manifest hash; run pnpm stems:placeholder`,
+    );
+  }
+  stems.set(hash, decodeWav(bytes, hash));
+}
+for (const seed of [0, 42, 'spite-store']) {
+  const durationBars = 16;
+  const { wav, frames, endBar } = renderWav(placeholder, seed, { durationBars }, stems);
+  const bounds = Array.from({ length: endBar + 1 }, (_, b) => barFrame(placeholder, b)).concat(
+    frames,
+  );
+  const barSha256 = bounds
+    .slice(0, -1)
+    .map((from, i) => sha(wav.subarray(44 + from * 4, 44 + bounds[i + 1] * 4)));
+  const snapshot = {
+    manifest: placeholderPath,
+    seed,
+    durationBars,
+    renderFormat: RENDER_FORMAT,
+    frames,
+    wavSha256: sha(wav),
+    barSha256,
+  };
+  const file = join(root, 'fixtures/golden', `placeholder.audio.${seed}.json`);
+  writeFileSync(file, JSON.stringify(snapshot, null, 2) + '\n');
+  console.log(`${file}  ${snapshot.wavSha256}  (${frames} frames)`);
+}

@@ -1,0 +1,65 @@
+{
+  "count": {
+    "kind": "clicks",
+    "frames": 96000,
+    "level": 0.6,
+    "every": 24000,
+    "accentEvery": 4,
+    "clickFrames": 480
+  },
+  "pad-long": {
+    "kind": "tone",
+    "frames": 288000,
+    "level": 0.25,
+    "wave": "triangle",
+    "period": 182,
+    "channels": 2,
+    "detune": 1,
+    "attack": 4800,
+    "release": 120000
+  },
+  "pad-short": {
+    "kind": "tone",
+    "frames": 192000,
+    "level": 0.25,
+    "wave": "triangle",
+    "period": 273,
+    "channels": 2,
+    "detune": 2,
+    "attack": 2400,
+    "release": 24000
+  },
+  "bass-a": {
+    "kind": "tone",
+    "frames": 96000,
+    "level": 0.3,
+    "wave": "saw",
+    "period": 436,
+    "attack": 96,
+    "release": 4800
+  },
+  "bass-b": {
+    "kind": "tone",
+    "frames": 192000,
+    "level": 0.3,
+    "wave": "square",
+    "period": 545,
+    "attack": 96,
+    "release": 9600
+  },
+  "hat-a": {
+    "kind": "noise",
+    "frames": 24000,
+    "level": 0.4,
+    "seed": "hat-a",
+    "decay": 2400
+  },
+  "hat-b": {
+    "kind": "noise",
+    "frames": 24000,
+    "level": 0.4,
+    "seed": "hat-b",
+    "decay": 9600,
+    "channels": 2
+  }
+}

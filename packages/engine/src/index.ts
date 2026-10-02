@@ -31,3 +31,19 @@ export {
   type SlotState,
   type TraceEvent,
 } from './realize.js';
+export { CHOKE_FRAMES, SAMPLE_RATE, barFrame } from './audio/timing.js';
+export { decodeWav, encodeWav16, quantize16, type Stem } from './audio/wav.js';
+export {
+  RENDER_FORMAT,
+  createRenderState,
+  planRender,
+  realizeForRender,
+  renderAll,
+  renderBlock,
+  renderWav,
+  type RenderBlock,
+  type RenderPlan,
+  type RenderState,
+  type Voice,
+} from './audio/render.js';
+export { synthesizeClip, synthesizeStemWav, type ClipRecipe } from './audio/synth.js';

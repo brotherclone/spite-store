@@ -73,3 +73,57 @@ paths, ordering rules, or the realization rules. A bump means existing shared se
 different. Ship it deliberately, together with `pnpm golden:update`. Changes that leave every trace
 identical (refactors, new optional manifest features that existing manifests don't use) do not bump
 it, and the golden tests prove that.
+
+## Audio rendering
+
+The engine also turns a trace into audio, with the same determinism promise: the same manifest,
+seed, duration and stems give **identical samples** on every runtime.
+
+```js
+import { readFileSync } from 'node:fs';
+import { decodeWav, renderWav } from '@spite-store/engine';
+
+const manifest = JSON.parse(readFileSync('pieces/placeholder/manifest.json', 'utf8'));
+// Stems keyed by clip hash; run `pnpm stems:placeholder` first to create .stems/.
+const stems = new Map(
+  Object.values(manifest.clips).map((c) => [
+    c.hash,
+    decodeWav(readFileSync(`.stems/${c.hash.slice(7)}.wav`), c.hash),
+  ]),
+);
+const { wav, frames } = renderWav(manifest, 42, { durationBars: 16 }, stems);
+console.log(wav.byteLength, frames); // a 16-bit 48 kHz stereo WAV file
+```
+
+| Export                                               | Purpose                                                                                    |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `renderWav(manifest, seed, { durationBars }, stems)` | Realize, render and encode in one call.                                                    |
+| `realizeForRender(manifest, seed, opts)`             | The trace plus `endBar`, the bar after the last realized bar.                              |
+| `planRender(manifest, events, endBar, stems)`        | Voices with start, choke and end frames, plus the total length. Plain JSON.                |
+| `renderBlock(plan, stems, state, frames)`            | Renders the next block. State is `{ v, frame }`, so any block size gives the same samples. |
+| `renderAll(plan, stems)`                             | One-pass render.                                                                           |
+| `barFrame(manifest, bar)`                            | Start frame of a bar (48 kHz).                                                             |
+| `decodeWav(bytes, name)` / `encodeWav16(channels)`   | Stem decoding (PCM 16/24, float32, 48 kHz, mono or stereo) and canonical 16-bit output.    |
+| `synthesizeStemWav(recipe)`                          | Placeholder stem synthesis (development only).                                             |
+| `RENDER_FORMAT`                                      | Version of the rendering rules (see below).                                                |
+
+**Timing.** Within a tempo entry `{ bar: s, bpm, meter: [beats, unit] }`, bar `b` starts at
+`F(s) + round((b - s) * beats * (4/unit) * 60 * 48000 / bpm)`, rounding halves up. Errors never
+accumulate across bars.
+
+**Tails and choke.** A stem may be longer than its clip's `lengthBars`; the rest is its tail. A
+clip sounds until its stem ends or until the **same slot id** starts its next clip, which fades it
+out linearly over 480 frames (10 ms). Different slot ids never choke each other, tails ring across
+section boundaries, and after the last bar every tail rings out. Exclusions constrain clip bodies
+only, so a tail may briefly overlap a clip it excludes. Because slot ids act as voices, reusing a
+slot id in two sections for unrelated material makes them choke each other.
+
+**Mixing.** Each output frame is the sum, in trace order, of `sample * gain * fade` over the voices
+sounding at that frame, computed in doubles. Output clips to [-1, 1] and rounds `x * 32767` half up,
+with no dither.
+
+### `RENDER_FORMAT` bump policy
+
+Bump `RENDER_FORMAT` for any change that alters rendered samples for an existing (manifest, seed,
+stems), such as timing, choke, mixing or encoding, and regenerate the golden audio with
+`pnpm golden:update`. Bumping `TRACE_FORMAT` implies new audio too, so regenerate both.

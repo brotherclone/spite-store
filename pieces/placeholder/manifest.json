@@ -1,0 +1,107 @@
+{
+  "$schema": "../../schema/manifest.schema.json",
+  "specVersion": "0.1",
+  "id": "placeholder",
+  "title": "Placeholder",
+  "tempo": [
+    { "bar": 0, "bpm": 120, "meter": [4, 4] },
+    { "bar": 8, "bpm": 120, "meter": [3, 4] }
+  ],
+  "clips": {
+    "count": {
+      "hash": "sha256:8c4ee5edb412d61e59456364cccca08b412c58a9011862a38eaa40ac8ad63e7e",
+      "lengthBars": 1,
+      "gain": 0.8
+    },
+    "pad-long": {
+      "hash": "sha256:7a6504376d08634c78064a42ec398a33dd41b170018aeb87f589b576b8d74657",
+      "lengthBars": 2,
+      "gain": 0.7
+    },
+    "pad-short": {
+      "hash": "sha256:d475e53d16f4903188de5116af6edcf2dc061d3de2805011de7cd7bbddafa856",
+      "lengthBars": 2,
+      "gain": 0.6
+    },
+    "bass-a": {
+      "hash": "sha256:c70bdcbf1d1163cfd1ddad0912a3426f08b1ac0272c54e23d91ad9220202eaaf",
+      "lengthBars": 1
+    },
+    "bass-b": {
+      "hash": "sha256:006b2634a86e7bbf1e7caee3e7c441a8ac289e7f8306775301c9ef1b25c4a3c5",
+      "lengthBars": 2,
+      "excludes": ["hat-b"]
+    },
+    "hat-a": {
+      "hash": "sha256:32b11648985c08c3251b468379f71ab58b10a46f1032e0d2269a09b815e8caf5",
+      "lengthBars": 1,
+      "gain": 0.7
+    },
+    "hat-b": {
+      "hash": "sha256:4700673c86d8f9be4ce8a7762496c00a3312bfd6bfe8751c287aae2ac328ea63",
+      "lengthBars": 1,
+      "gain": 0.7
+    }
+  },
+  "start": "intro",
+  "sections": [
+    {
+      "id": "intro",
+      "lengthBars": 4,
+      "maxVisits": 1,
+      "slots": [
+        { "id": "click", "pool": [{ "clip": "count", "weight": 1 }] },
+        { "id": "pad", "pool": [{ "clip": "pad-long", "weight": 1 }] }
+      ],
+      "next": [{ "to": "groove", "weight": 1 }]
+    },
+    {
+      "id": "groove",
+      "lengthBars": 4,
+      "maxVisits": 4,
+      "slots": [
+        { "id": "click", "gain": 0.6, "pool": [{ "clip": "count", "weight": 1 }] },
+        {
+          "id": "bass",
+          "enter": 0.9,
+          "noRepeat": 1,
+          "pool": [
+            { "clip": "bass-a", "weight": 2 },
+            { "clip": "bass-b", "weight": 1 }
+          ]
+        },
+        {
+          "id": "hat",
+          "enter": 0.8,
+          "pool": [
+            { "clip": "hat-a", "weight": 1 },
+            { "clip": "hat-b", "weight": 1 }
+          ]
+        },
+        {
+          "id": "pad",
+          "enter": 0.6,
+          "noRepeat": 1,
+          "pool": [
+            { "clip": "pad-long", "weight": 1 },
+            { "clip": "pad-short", "weight": 1 }
+          ]
+        }
+      ],
+      "next": [
+        { "to": "groove", "weight": 2 },
+        { "to": "break", "weight": 1 }
+      ]
+    },
+    {
+      "id": "break",
+      "lengthBars": 2,
+      "maxVisits": 2,
+      "slots": [
+        { "id": "pad", "pool": [{ "clip": "pad-short", "weight": 1 }] },
+        { "id": "hat", "enter": 0.5, "pool": [{ "clip": "hat-b", "weight": 1 }] }
+      ],
+      "next": [{ "to": "groove", "weight": 1 }]
+    }
+  ]
+}

@@ -13,6 +13,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "pnpm -r run typecheck",
+    "stems:placeholder": "pnpm --filter @spite-store/engine run build && node scripts/stems-placeholder.mjs",
     "golden:update": "pnpm --filter @spite-store/engine run build && node scripts/golden-update.mjs"
   },
   "devDependencies": {

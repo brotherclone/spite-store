@@ -27,3 +27,6 @@ coverage/
 *.ogg
 *.opus
 *.m4a
+
+# Locally generated stems (content-addressed by sha256)
+.stems/
