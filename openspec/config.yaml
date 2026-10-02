@@ -1,0 +1,43 @@
+schema: spec-driven
+
+# Project context: constraints that guide OpenSpec artifacts and workflows.
+context: |
+  Project: "Spite Store", a Bandcamp/GitHub-style platform for aleatoric music
+  (seeded, non-repeating). Step 1 is the monorepo, the manifest schema draft,
+  and the engine core.
+
+  Tooling:
+  - pnpm workspaces; root package.json pins "packageManager": "pnpm@10.x".
+  - Node LTS pinned in "engines"; .npmrc sets engine-strict=true.
+  - TypeScript strict everywhere. Vitest for tests. tsdown (or tsup) for library
+    builds, Vite for the site. ESLint + Prettier.
+  - No Turborepo (or other task runner) yet; use pnpm -r / --filter.
+
+  Layout:
+  - schema/            Music manifest JSON Schema (v0.1), examples/{valid,invalid},
+                       CHANGELOG. This is the product's data schema. Do NOT confuse it
+                       with openspec/specs (behavioral requirements).
+  - packages/engine    Pure TypeScript. No DOM, zero runtime dependencies. Must run
+                       unchanged in an AudioWorklet and in Node.
+  - packages/player    <spite-player> web component.
+  - packages/cli       validate / audition / bounce / pack.
+  - fixtures/golden/   Golden trace snapshots.
+  - pieces/            Authored pieces (manifests only).
+  - site/              Vite site.
+
+  Invariants:
+  - Audio assets are never committed. Manifests reference stems by sha256
+    content hash.
+  - Determinism is core: the same manifest + seed produces an identical event
+    trace on any device/runtime. Avoid anything platform-dependent in the engine
+    (Math.random, Date, locale, unordered iteration, transcendental float math
+    in decision logic).
+
+# Per-artifact rules
+rules:
+  proposal:
+    - Always state what is out of scope
+  design:
+    - Call out any decision that affects determinism or seeded decision paths
+  specs:
+    - Determinism-related requirements need concrete, testable scenarios
