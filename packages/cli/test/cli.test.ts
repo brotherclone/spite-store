@@ -64,11 +64,11 @@ describe('spite validate', () => {
   });
 });
 
-describe('spite stubs and usage', () => {
-  it.each(['pack'])('%s is not implemented yet', async (command) => {
-    const r = await spite(command);
-    expect(r.code).toBe(2);
-    expect(r.stderr).toContain('not implemented yet');
+describe('spite usage', () => {
+  it('lists pack in the help', async () => {
+    const r = await spite('--help');
+    expect(r.code).toBe(0);
+    expect(r.stdout).toContain('pack <manifest.json> --source <dir>');
   });
 
   it('rejects unknown commands', async () => {

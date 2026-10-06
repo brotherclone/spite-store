@@ -17,13 +17,46 @@ describe('seed permalinks', () => {
   it('opens a permalink with its seed and bars', () => {
     const { player, attrs } = fakePlayer();
     applyQuery(player, 'http://localhost/?seed=hello&bars=16');
-    expect(Object.fromEntries(attrs)).toEqual({ seed: 'hello', bars: '16' });
+    expect(Object.fromEntries(attrs)).toEqual({
+      src: '/pieces/placeholder/manifest.json',
+      seed: 'hello',
+      bars: '16',
+    });
   });
 
   it('defaults to 64 bars and leaves the seed to the player', () => {
     const { player, attrs } = fakePlayer();
     applyQuery(player, 'http://localhost/');
-    expect(Object.fromEntries(attrs)).toEqual({ bars: '64' });
+    expect(Object.fromEntries(attrs)).toEqual({
+      src: '/pieces/placeholder/manifest.json',
+      bars: '64',
+    });
+  });
+
+  it('chooses a piece', () => {
+    const { player, attrs } = fakePlayer();
+    applyQuery(player, 'http://localhost/?piece=the-river-forgets-to-answer&seed=hello');
+    expect(attrs.get('src')).toBe('/pieces/the-river-forgets-to-answer/manifest.json');
+    expect(attrs.get('seed')).toBe('hello');
+  });
+
+  it.each(['../secret', '', 'UPPER', '%2e%2e'])('ignores the invalid piece %j', (piece) => {
+    const { player, attrs } = fakePlayer();
+    applyQuery(player, `http://localhost/?piece=${piece}`);
+    expect(attrs.get('src')).toBe('/pieces/placeholder/manifest.json');
+  });
+
+  it('keeps the piece when the player rerolls', () => {
+    const { player, announce } = fakePlayer();
+    const location = { href: 'http://localhost/?piece=the-river-forgets-to-answer&seed=a' };
+    const history = {
+      replaceState: (_d: unknown, _u: string, url: string) => void (location.href = url),
+    };
+    followPlayer(player, history, location);
+    announce('tamirobe', 64);
+    const url = new URL(location.href);
+    expect(url.searchParams.get('piece')).toBe('the-river-forgets-to-answer');
+    expect(url.searchParams.get('seed')).toBe('tamirobe');
   });
 
   it('follows the player with replaceState, keeping other parameters and history length', () => {

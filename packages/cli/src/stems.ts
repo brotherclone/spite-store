@@ -53,6 +53,6 @@ export function loadStems(
 export function reportStemProblems(problems: readonly StemProblem[]): void {
   for (const p of problems) console.error(`stem ${p.clipIds.join(', ')}  ${p.hash}  ${p.reason}`);
   console.error(
-    `${problems.length} stem(s) unavailable; for the placeholder piece run pnpm stems:placeholder`,
+    `${problems.length} stem(s) unavailable; for the placeholder piece run pnpm stems:placeholder, for a recorded piece run spite pack`,
   );
 }

@@ -1,0 +1,296 @@
+{
+  "manifest": "pieces/the-river-forgets-to-answer/manifest.json",
+  "seed": 42,
+  "durationBars": 64,
+  "traceFormat": 1,
+  "traceHash": "24e660b34d0d483ac1b10cfe57bb4d9bf0085ef1dc9454f4be5496ecaf7f8cf4",
+  "trace": [
+    {
+      "bar": 0,
+      "beat": 0,
+      "slot": "cello-close",
+      "clipHash": "sha256:0628c37746ae10a7ba2af8d92335fff865ce726bcebd73d6d75a2cf539ae48ee",
+      "gain": 0.5
+    },
+    {
+      "bar": 0,
+      "beat": 0,
+      "slot": "cello-room",
+      "clipHash": "sha256:fdb0d446bfe355d6d5b0f683131df1c32299d0f180cdcbe09dd385d159388bf1",
+      "gain": 0.4
+    },
+    {
+      "bar": 0,
+      "beat": 0,
+      "slot": "vio1-close",
+      "clipHash": "sha256:2194f8bcb04fc51a0a2f88e4b1ebc7a53588333e007a6e5754a2336d4c879da3",
+      "gain": 0.5
+    },
+    {
+      "bar": 0,
+      "beat": 0,
+      "slot": "vio1-room",
+      "clipHash": "sha256:355fa9d85dc36c8dec557c86a717fa91652174be43b9bddfb88c7c2a2498a5bc",
+      "gain": 0.4
+    },
+    {
+      "bar": 0,
+      "beat": 0,
+      "slot": "vio2-close",
+      "clipHash": "sha256:c7d08d5260e32ea0abfdca462da77ece67da53a4d1a61c2cd1b57085686a927e",
+      "gain": 0.5
+    },
+    {
+      "bar": 0,
+      "beat": 0,
+      "slot": "vio2-room",
+      "clipHash": "sha256:8c02777c2fa20cde2e9eaf7fb781f48abf7f3f7897824ba69de43e8cbd2255b2",
+      "gain": 0.4
+    },
+    {
+      "bar": 0,
+      "beat": 0,
+      "slot": "viola-close",
+      "clipHash": "sha256:fe0d0ad8dc4c26d0e9af5b45cadbd1a7573b8f4cb5815b0e1937e46fa5e48698",
+      "gain": 0.5
+    },
+    {
+      "bar": 0,
+      "beat": 0,
+      "slot": "viola-room",
+      "clipHash": "sha256:05b92b15c4141885012b330463c17d29065657b54752d773b472bc55e2579aa5",
+      "gain": 0.4
+    },
+    {
+      "bar": 4,
+      "beat": 0,
+      "slot": "cello-close",
+      "clipHash": "sha256:264213aebed2d85a642ba080896821c8e78442da5c15149796e30982724530a2",
+      "gain": 0.5
+    },
+    {
+      "bar": 4,
+      "beat": 0,
+      "slot": "vio1-close",
+      "clipHash": "sha256:636249508a09247931e55fb6ec622bcf67dccb8ef376c2b6b2a8e0b6c1dec2ef",
+      "gain": 0.5
+    },
+    {
+      "bar": 4,
+      "beat": 0,
+      "slot": "vio1-room",
+      "clipHash": "sha256:f98fb9501175477bb1766bb8181d25a628ddea0b47a5e3b35e6f426d531466b6",
+      "gain": 0.4
+    },
+    {
+      "bar": 4,
+      "beat": 0,
+      "slot": "vio2-close",
+      "clipHash": "sha256:cd27b470fc08afd424e07781f40ba48ba34bd97a8e0fcd3386459c631de51547",
+      "gain": 0.5
+    },
+    {
+      "bar": 4,
+      "beat": 0,
+      "slot": "vio2-room",
+      "clipHash": "sha256:cb956f055ad155736ec2c47c1bb5edf0b05d1d2d64ed15c182dfd11e5bbcc0cd",
+      "gain": 0.4
+    },
+    {
+      "bar": 8,
+      "beat": 0,
+      "slot": "vio1-close",
+      "clipHash": "sha256:cc3adb05b2234e881b6446c12a60468a1cbfa803b66248d5621ac098a59c2577",
+      "gain": 0.5
+    },
+    {
+      "bar": 8,
+      "beat": 0,
+      "slot": "vio1-room",
+      "clipHash": "sha256:3ddedcce501c22a38664d8a4e58b2c85ac13feccb410170abc006f37bfb33d6e",
+      "gain": 0.4
+    },
+    {
+      "bar": 8,
+      "beat": 0,
+      "slot": "vio2-close",
+      "clipHash": "sha256:62567399325ead776b510068de14bad4286aeeed8afb3e1b5622f07cdbfc30c6",
+      "gain": 0.5
+    },
+    {
+      "bar": 8,
+      "beat": 0,
+      "slot": "vio2-room",
+      "clipHash": "sha256:5908a4fcf36b7867b80c85adddbd00927a14bf79a39a30e9a886ab853345806a",
+      "gain": 0.4
+    },
+    {
+      "bar": 8,
+      "beat": 0,
+      "slot": "viola-close",
+      "clipHash": "sha256:d8da536416f99fc2093c86e91fce65f70f97242b4c067e314d1e2a3043297add",
+      "gain": 0.5
+    },
+    {
+      "bar": 12,
+      "beat": 0,
+      "slot": "cello-close",
+      "clipHash": "sha256:0628c37746ae10a7ba2af8d92335fff865ce726bcebd73d6d75a2cf539ae48ee",
+      "gain": 0.5
+    },
+    {
+      "bar": 12,
+      "beat": 0,
+      "slot": "vio1-close",
+      "clipHash": "sha256:2194f8bcb04fc51a0a2f88e4b1ebc7a53588333e007a6e5754a2336d4c879da3",
+      "gain": 0.5
+    },
+    {
+      "bar": 12,
+      "beat": 0,
+      "slot": "vio2-close",
+      "clipHash": "sha256:c7d08d5260e32ea0abfdca462da77ece67da53a4d1a61c2cd1b57085686a927e",
+      "gain": 0.5
+    },
+    {
+      "bar": 12,
+      "beat": 0,
+      "slot": "viola-close",
+      "clipHash": "sha256:fe0d0ad8dc4c26d0e9af5b45cadbd1a7573b8f4cb5815b0e1937e46fa5e48698",
+      "gain": 0.5
+    },
+    {
+      "bar": 12,
+      "beat": 0,
+      "slot": "viola-room",
+      "clipHash": "sha256:05b92b15c4141885012b330463c17d29065657b54752d773b472bc55e2579aa5",
+      "gain": 0.4
+    },
+    {
+      "bar": 16,
+      "beat": 0,
+      "slot": "cello-close",
+      "clipHash": "sha256:264213aebed2d85a642ba080896821c8e78442da5c15149796e30982724530a2",
+      "gain": 0.5
+    },
+    {
+      "bar": 16,
+      "beat": 0,
+      "slot": "vio1-close",
+      "clipHash": "sha256:cc3adb05b2234e881b6446c12a60468a1cbfa803b66248d5621ac098a59c2577",
+      "gain": 0.5
+    },
+    {
+      "bar": 16,
+      "beat": 0,
+      "slot": "viola-close",
+      "clipHash": "sha256:d8da536416f99fc2093c86e91fce65f70f97242b4c067e314d1e2a3043297add",
+      "gain": 0.5
+    },
+    {
+      "bar": 20,
+      "beat": 0,
+      "slot": "cello-close",
+      "clipHash": "sha256:0628c37746ae10a7ba2af8d92335fff865ce726bcebd73d6d75a2cf539ae48ee",
+      "gain": 0.5
+    },
+    {
+      "bar": 20,
+      "beat": 0,
+      "slot": "cello-room",
+      "clipHash": "sha256:fdb0d446bfe355d6d5b0f683131df1c32299d0f180cdcbe09dd385d159388bf1",
+      "gain": 0.4
+    },
+    {
+      "bar": 20,
+      "beat": 0,
+      "slot": "vio1-close",
+      "clipHash": "sha256:2194f8bcb04fc51a0a2f88e4b1ebc7a53588333e007a6e5754a2336d4c879da3",
+      "gain": 0.5
+    },
+    {
+      "bar": 20,
+      "beat": 0,
+      "slot": "vio2-close",
+      "clipHash": "sha256:cd27b470fc08afd424e07781f40ba48ba34bd97a8e0fcd3386459c631de51547",
+      "gain": 0.5
+    },
+    {
+      "bar": 20,
+      "beat": 0,
+      "slot": "viola-close",
+      "clipHash": "sha256:155c1fd93a770b0c5a6ff2e261f5885fd228d4054b252d318714383b3d9959e8",
+      "gain": 0.5
+    },
+    {
+      "bar": 20,
+      "beat": 0,
+      "slot": "viola-room",
+      "clipHash": "sha256:df702e4c1966b2194f6944c0377b76655cc7747686e22da174ac7efe0b6b8961",
+      "gain": 0.4
+    },
+    {
+      "bar": 24,
+      "beat": 0,
+      "slot": "cello-close",
+      "clipHash": "sha256:264213aebed2d85a642ba080896821c8e78442da5c15149796e30982724530a2",
+      "gain": 0.5
+    },
+    {
+      "bar": 24,
+      "beat": 0,
+      "slot": "vio1-close",
+      "clipHash": "sha256:cc3adb05b2234e881b6446c12a60468a1cbfa803b66248d5621ac098a59c2577",
+      "gain": 0.5
+    },
+    {
+      "bar": 24,
+      "beat": 0,
+      "slot": "vio1-room",
+      "clipHash": "sha256:3ddedcce501c22a38664d8a4e58b2c85ac13feccb410170abc006f37bfb33d6e",
+      "gain": 0.4
+    },
+    {
+      "bar": 24,
+      "beat": 0,
+      "slot": "vio2-close",
+      "clipHash": "sha256:c7d08d5260e32ea0abfdca462da77ece67da53a4d1a61c2cd1b57085686a927e",
+      "gain": 0.5
+    },
+    {
+      "bar": 24,
+      "beat": 0,
+      "slot": "vio2-room",
+      "clipHash": "sha256:8c02777c2fa20cde2e9eaf7fb781f48abf7f3f7897824ba69de43e8cbd2255b2",
+      "gain": 0.4
+    },
+    {
+      "bar": 29,
+      "beat": 0,
+      "slot": "cello-close",
+      "clipHash": "sha256:481127661eb91b7c4e84186ad48b1b63ffc63cba20ace744b2a49ca727605f6e",
+      "gain": 0.5
+    },
+    {
+      "bar": 29,
+      "beat": 0,
+      "slot": "vio1-close",
+      "clipHash": "sha256:636249508a09247931e55fb6ec622bcf67dccb8ef376c2b6b2a8e0b6c1dec2ef",
+      "gain": 0.5
+    },
+    {
+      "bar": 29,
+      "beat": 0,
+      "slot": "vio1-room",
+      "clipHash": "sha256:f98fb9501175477bb1766bb8181d25a628ddea0b47a5e3b35e6f426d531466b6",
+      "gain": 0.4
+    },
+    {
+      "bar": 29,
+      "beat": 0,
+      "slot": "vio2-close",
+      "clipHash": "sha256:62567399325ead776b510068de14bad4286aeeed8afb3e1b5622f07cdbfc30c6",
+      "gain": 0.5
+    }
+  ]
+}

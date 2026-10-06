@@ -32,7 +32,7 @@ Common scripts, all run from the repo root:
 
 ## Hearing a piece
 
-There is no real audio in the repo yet, but the placeholder piece's stems can be synthesized:
+Audio is never committed. The placeholder piece's stems can be synthesized:
 
 ```sh
 pnpm build
@@ -40,17 +40,27 @@ pnpm stems:placeholder                                       # writes .stems/<sh
 pnpm exec spite audition pieces/placeholder/manifest.json    # 4 seeds, 16 bars each, via afplay
 ```
 
-See `packages/cli/README.md` for `realize`, `bounce` and `audition`.
+The first recorded piece, _The River Forgets to Answer_, needs its source recordings, which live
+outside the repo. `spite pack` cuts them into stems (see `pieces/the-river-forgets-to-answer/`):
 
-In the browser, the site serves the placeholder piece with `<spite-player>`:
+```sh
+pnpm exec spite pack pieces/the-river-forgets-to-answer/manifest.json --source "<…>/Collaborations"
+pnpm exec spite audition pieces/the-river-forgets-to-answer/manifest.json --bars 64
+```
+
+See `packages/cli/README.md` for `realize`, `bounce`, `audition` and `pack`.
+
+In the browser, the site serves a piece with `<spite-player>` (the placeholder unless `?piece=` names
+another):
 
 ```sh
 pnpm build
 pnpm stems:placeholder
 pnpm --filter site dev     # then open http://localhost:5173/?seed=hello&bars=16
+                           # or /?piece=the-river-forgets-to-answer&seed=hello
 ```
 
-The URL is a permalink: the same `seed` and `bars` always play the same performance. See
+The URL is a permalink: the same `piece`, `seed` and `bars` always play the same performance. See
 `packages/player/README.md` for embedding the player elsewhere.
 
 ## Browser tests
@@ -69,10 +79,10 @@ pnpm exec playwright install chromium firefox webkit
 schema/            Music manifest JSON Schema (v0.1), examples/{valid,invalid}, CHANGELOG
 packages/engine    Pure TypeScript realization engine: no DOM, zero runtime dependencies
 packages/player    <spite-player> web component (AudioWorklet + canvas lanes view)
-packages/cli       `spite` CLI: validate (audition / bounce / pack are stubs)
+packages/cli       `spite` CLI: validate, realize, bounce, audition, pack
 fixtures/golden/   Golden trace snapshots
-pieces/            Authored pieces (manifests only); pieces/placeholder for development
-site/              Vite page for the placeholder piece, with seed permalinks
+pieces/            Authored pieces (manifests and pack files only); pieces/placeholder for development
+site/              Vite page for any piece, with seed permalinks
 openspec/          Behavioral specs and change proposals (OpenSpec)
 ```
 
