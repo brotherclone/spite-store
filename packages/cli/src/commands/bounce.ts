@@ -1,14 +1,9 @@
 import { writeFileSync } from 'node:fs';
-import {
-  SAMPLE_RATE,
-  encodeWav16,
-  planRender,
-  realizeForRender,
-  renderAll,
-} from '@spite-store/engine';
+import { SAMPLE_RATE } from '@spite-store/engine';
 import { parse } from '../args.js';
 import { EXIT_OK, EXIT_USAGE, UsageError, loadManifest, positiveInt } from '../common.js';
-import { DEFAULT_STEMS_DIR, loadStems, reportStemProblems } from '../stems.js';
+import { renderSeedWav } from '../render.js';
+import { DEFAULT_STEMS_DIR, reportStemProblems } from '../stems.js';
 
 export function bounceCommand(argv: string[]): number {
   const { values, positionals } = parse(argv, {
@@ -23,23 +18,20 @@ export function bounceCommand(argv: string[]): number {
   const bars = positiveInt('bars', values.bars, 64);
   const loaded = loadManifest(positionals[0]!);
   if (!('manifest' in loaded)) return loaded.exit;
-  const { manifest } = loaded;
 
-  const { events, endBar } = realizeForRender(manifest, values.seed, { durationBars: bars });
-  const { stems, problems } = loadStems(
-    manifest,
-    events.map((e) => e.clipHash),
+  const rendered = renderSeedWav(
+    loaded.manifest,
+    values.seed,
+    bars,
     values.stems ?? DEFAULT_STEMS_DIR,
   );
-  if (problems.length > 0) {
-    reportStemProblems(problems);
+  if ('problems' in rendered) {
+    reportStemProblems(rendered.problems);
     return EXIT_USAGE;
   }
-  const plan = planRender(manifest, events, endBar, stems);
-  const { left, right } = renderAll(plan, stems);
-  writeFileSync(values.out, encodeWav16([left, right]));
+  writeFileSync(values.out, rendered.wav);
   console.log(
-    `${values.out}  ${(plan.totalFrames / SAMPLE_RATE).toFixed(2)} s  ${events.length} events`,
+    `${values.out}  ${(rendered.frames / SAMPLE_RATE).toFixed(2)} s  ${rendered.events} events`,
   );
   return EXIT_OK;
 }

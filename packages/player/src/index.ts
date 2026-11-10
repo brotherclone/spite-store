@@ -1,6 +1,6 @@
 import { SpitePlayer } from './element.js';
 
-export { SpitePlayer } from './element.js';
+export { SpitePlayer, type FallbackReason } from './element.js';
 export { EngineNode, defaultWorkletUrl } from './audio.js';
 export {
   LoadError,

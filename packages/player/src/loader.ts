@@ -51,7 +51,7 @@ export async function loadManifest(src: string, fetchImpl: Fetch = fetch): Promi
   return data as Manifest;
 }
 
-async function sha256Hex(bytes: ArrayBuffer): Promise<string> {
+export async function sha256Hex(bytes: ArrayBuffer): Promise<string> {
   const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
   let hex = '';
   for (const b of digest) hex += b.toString(16).padStart(2, '0');

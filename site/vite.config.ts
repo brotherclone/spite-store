@@ -1,3 +1,4 @@
+import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { defineConfig, type Plugin } from 'vite';
 import { serveDev } from './dev-serve.js';
@@ -26,8 +27,34 @@ function piecesAndStems(): Plugin {
   };
 }
 
+/**
+ * Production only: emits every `pieces/<id>/manifest.json`, byte for byte, at the same path. Pack
+ * files, READMEs and audio stay out of the build; stems come from the stem store (see vercel.json).
+ */
+export function pieceManifests(piecesDir = join(repo, 'pieces')): Plugin {
+  return {
+    name: 'spite-piece-manifests',
+    apply: 'build',
+    generateBundle() {
+      const ids = readdirSync(piecesDir, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name)
+        .sort();
+      for (const id of ids) {
+        let source: Buffer;
+        try {
+          source = readFileSync(join(piecesDir, id, 'manifest.json'));
+        } catch {
+          continue;
+        }
+        this.emitFile({ type: 'asset', fileName: `pieces/${id}/manifest.json`, source });
+      }
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [piecesAndStems()],
+  plugins: [piecesAndStems(), pieceManifests()],
   // Pre-bundling would rewrite import.meta.url, which the player uses to find its worklet.
   optimizeDeps: { exclude: ['@spite-store/player'] },
 });

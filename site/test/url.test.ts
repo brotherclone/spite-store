@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyQuery, followPlayer, type PlayerLike } from '../src/url.js';
+import { applyQuery, defaultPiece, followPlayer, type PlayerLike } from '../src/url.js';
 
 function fakePlayer() {
   const attrs = new Map<string, string>();
@@ -76,5 +76,36 @@ describe('seed permalinks', () => {
     expect(url.searchParams.get('x')).toBe('1');
     expect(url.searchParams.get('seed')).toBe('tamirobe');
     expect(url.searchParams.get('bars')).toBe('32');
+  });
+});
+
+describe('default piece', () => {
+  const RIVER = 'the-river-forgets-to-answer';
+
+  it('opens the configured production default with no query', () => {
+    const { player, attrs } = fakePlayer();
+    applyQuery(player, 'http://localhost/', defaultPiece(RIVER));
+    expect(attrs.get('src')).toBe(`/pieces/${RIVER}/manifest.json`);
+  });
+
+  it('still selects the placeholder by name', () => {
+    const { player, attrs } = fakePlayer();
+    applyQuery(player, 'http://localhost/?piece=placeholder', defaultPiece(RIVER));
+    expect(attrs.get('src')).toBe('/pieces/placeholder/manifest.json');
+  });
+
+  it.each([
+    [undefined, 'placeholder'],
+    [RIVER, RIVER],
+  ])('ignores an invalid piece with default %s', (configured, expected) => {
+    const { player, attrs } = fakePlayer();
+    applyQuery(player, 'http://localhost/?piece=../secret', defaultPiece(configured));
+    expect(attrs.get('src')).toBe(`/pieces/${expected}/manifest.json`);
+  });
+
+  it('falls back to the placeholder when the configured default is not a valid id', () => {
+    expect(defaultPiece(undefined)).toBe('placeholder');
+    expect(defaultPiece('../x')).toBe('placeholder');
+    expect(defaultPiece(RIVER)).toBe(RIVER);
   });
 });

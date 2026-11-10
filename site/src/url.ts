@@ -10,19 +10,24 @@ export interface HistoryLike {
 const PIECE_ID = /^[a-z0-9][a-z0-9_-]{0,63}$/;
 export const DEFAULT_PIECE = 'placeholder';
 
-/** The manifest URL for `?piece=`, falling back to the placeholder when absent or not a valid id. */
-export function manifestUrl(href: string): string {
+/** The default piece a build was configured with (`VITE_DEFAULT_PIECE`), or the placeholder. */
+export function defaultPiece(configured: string | undefined): string {
+  return configured !== undefined && PIECE_ID.test(configured) ? configured : DEFAULT_PIECE;
+}
+
+/** The manifest URL for `?piece=`, falling back to `fallbackPiece` when absent or not a valid id. */
+export function manifestUrl(href: string, fallbackPiece = DEFAULT_PIECE): string {
   const piece = new URL(href).searchParams.get('piece');
-  return `/pieces/${piece !== null && PIECE_ID.test(piece) ? piece : DEFAULT_PIECE}/manifest.json`;
+  return `/pieces/${piece !== null && PIECE_ID.test(piece) ? piece : fallbackPiece}/manifest.json`;
 }
 
 /**
  * Passes `?piece=`, `?seed=` and `?bars=` to the player. Without a seed the player picks a random
  * one. The player batches attribute changes, so this all becomes a single load.
  */
-export function applyQuery(player: PlayerLike, href: string): void {
+export function applyQuery(player: PlayerLike, href: string, fallbackPiece = DEFAULT_PIECE): void {
   const params = new URL(href).searchParams;
-  player.setAttribute('src', manifestUrl(href));
+  player.setAttribute('src', manifestUrl(href, fallbackPiece));
   const seed = params.get('seed');
   const bars = params.get('bars');
   if (seed) player.setAttribute('seed', seed);

@@ -125,3 +125,61 @@ available), touching a file only if a hash in it changed.
 ```sh
 pnpm exec spite pack pieces/the-river-forgets-to-answer/manifest.json --source "<…>/Collaborations"
 ```
+
+## `spite fallback <manifest> --seed <seed> [--bars 64] [--stems <dir>] [--update]`
+
+Makes a piece's fallback recording: one fixed performance that `<spite-player>` plays when a
+browser can't run the generative version. It renders the seed exactly as `spite bounce` does,
+encodes it to MP3 (48 kHz stereo, 256 kbps CBR) and writes `<dir>/<hex>.mp3`, named by the MP3's
+own sha256. It prints the hash, duration and size.
+
+It then compares the result with the manifest's `fallback`. With `--update` it records
+`{ hash, type: "audio/mpeg", seed, bars }` there (formatted with Prettier when available), and
+leaves every other field alone. Without `--update`, a different hash, seed or length is reported
+and the manifest is left unchanged.
+
+Encoding needs `ffmpeg` with `libmp3lame` on `PATH` (`brew install ffmpeg`). No other command needs
+it. Metadata and the encoder-version tag are stripped, so one ffmpeg build always gives the same
+bytes, but another ffmpeg or LAME version may not. That's why the manifest pins the published
+file by hash. Re-encoding on a different machine reports a changed hash (exit 1) rather than
+silently replacing a published recording. Only the render is part of the determinism promise.
+
+| Exit code | Meaning                                                                 |
+| --------- | ----------------------------------------------------------------------- |
+| 0         | File written, and the manifest's fallback matches (or was updated)      |
+| 1         | Invalid manifest, or the fallback differs (without `--update`)          |
+| 2         | Usage error, a missing or invalid stem, or no `ffmpeg` with MP3 support |
+
+```sh
+pnpm exec spite fallback pieces/the-river-forgets-to-answer/manifest.json --seed spite-store --update
+```
+
+## `spite publish <manifest...> [--stems <dir>]`
+
+Uploads every file the manifests reference to the public stem store (Vercel Blob): the stem of
+every clip in each catalogue, not only those a seed happens to use, and each manifest's fallback.
+Files are stored at `stems/<hex>.wav` (or `stems/<hex>.mp3`), named by content hash, publicly
+readable, with no random suffix and a one-year cache lifetime.
+
+- Every file is read from the stems directory and checked against its hash **before** anything is
+  uploaded. One missing or corrupt file means nothing is uploaded.
+- A file the store already holds is skipped. A stored file is never replaced or deleted, so a
+  second run uploads nothing, and every earlier deployment keeps finding its stems.
+- The store's write token comes from `BLOB_READ_WRITE_TOKEN` and is never printed. `vercel env pull
+.env.local` writes it to a git-ignored file. Then:
+
+```sh
+node --env-file=.env.local packages/cli/bin/spite.js publish pieces/*/manifest.json
+```
+
+## `spite publish --check <base-url> <manifest...>`
+
+Uploads nothing and needs no token: sends `HEAD <base-url><hex>.<ext>` for every referenced file
+(one retry each) and lists each one that doesn't answer 2xx. The Vercel build runs this through
+`scripts/deploy-check.mjs`, so a deployment can't go live with a missing stem.
+
+| Exit code | Meaning                                                                     |
+| --------- | --------------------------------------------------------------------------- |
+| 0         | Every file uploaded or already present (`--check`: every file reachable)    |
+| 1         | Invalid manifest, a failed upload, or (`--check`) an unreachable file       |
+| 2         | Usage error, a missing or corrupt local file, or no `BLOB_READ_WRITE_TOKEN` |

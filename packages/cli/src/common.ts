@@ -1,4 +1,5 @@
-import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { readFileSync, writeFileSync } from 'node:fs';
 import type { Manifest } from '@spite-store/engine';
 import { validateManifest } from './validate.js';
 
@@ -21,9 +22,17 @@ Commands:
   pack <manifest.json> --source <dir> [--stems .stems] [--update]
       Cut the clips listed in the pack.json beside the manifest from recordings under --source
       into stems, and check (or with --update, rewrite) the manifest's clip hashes.
+  fallback <manifest.json> --seed <seed> [--bars 64] [--stems .stems] [--update]
+      Render one seed, encode it to MP3 with ffmpeg into the stems directory by hash, and check
+      (or with --update, record) the manifest's fallback.
+  publish <manifest.json...> [--stems .stems]
+      Upload every stem and fallback the manifests reference to the public store, by hash,
+      skipping files already there. Needs BLOB_READ_WRITE_TOKEN.
+  publish --check <base-url> <manifest.json...>
+      Upload nothing; check that every referenced file is reachable at <base-url><hex>.<ext>.
 
-Exit codes: 0 success, 1 invalid manifest or changed hashes, 2 usage error, unreadable file,
-missing stem or unusable source.`;
+Exit codes: 0 success, 1 invalid manifest, changed hashes, unreachable or failed uploads,
+2 usage error, unreadable file, missing stem, unusable source, missing ffmpeg or token.`;
 
 /** Thrown for bad command-line usage; reported with the usage text and exit code 2. */
 export class UsageError extends Error {}
@@ -59,4 +68,27 @@ export function positiveInt(name: string, value: string | undefined, fallback: n
     throw new UsageError(`--${name} must be a positive integer, got "${value}"`);
   }
   return n;
+}
+
+export const sha256 = (bytes: Uint8Array): string =>
+  `sha256:${createHash('sha256').update(bytes).digest('hex')}`;
+
+/** Formats JSON with the repository's Prettier config when Prettier can be resolved. */
+async function formatJson(text: string, file: string): Promise<string> {
+  try {
+    const name = 'prettier';
+    const prettier = (await import(name)) as typeof import('prettier');
+    const options = (await prettier.resolveConfig(file)) ?? {};
+    return await prettier.format(text, { ...options, filepath: file });
+  } catch {
+    return text;
+  }
+}
+
+/** Rewrites a JSON file through `edit`, leaving the file alone when `edit` reports no change. */
+export async function rewriteJson(file: string, edit: (data: never) => boolean): Promise<boolean> {
+  const data = JSON.parse(readFileSync(file, 'utf8')) as never;
+  if (!edit(data)) return false;
+  writeFileSync(file, await formatJson(JSON.stringify(data, null, 2) + '\n', file));
+  return true;
 }

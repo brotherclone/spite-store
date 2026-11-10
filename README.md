@@ -28,7 +28,8 @@ Common scripts, all run from the repo root:
 | `pnpm golden:update`     | Regenerate golden trace and audio snapshots on purpose                 |
 | `pnpm stems:placeholder` | Synthesize the placeholder stems into `.stems/` and check their hashes |
 
-`pnpm --filter site build` builds the site stub.
+`pnpm --filter site build` builds the production site into `site/dist`, with every piece's manifest
+under `/pieces/` (stems are served from the stem store; see [Releasing a piece](#releasing-a-piece)).
 
 ## Hearing a piece
 
@@ -63,6 +64,27 @@ pnpm --filter site dev     # then open http://localhost:5173/?seed=hello&bars=16
 The URL is a permalink: the same `piece`, `seed` and `bars` always play the same performance. See
 `packages/player/README.md` for embedding the player elsewhere.
 
+## Releasing a piece
+
+The production site is a static build on Vercel. Stems and fallback recordings live in a public
+Vercel Blob store, by content hash, and `/stems/*` on the site is served from there. Audio never
+goes through git, so publishing it is a step on your machine:
+
+```sh
+vercel env pull .env.local     # once: writes BLOB_READ_WRITE_TOKEN (git-ignored)
+pnpm build
+pnpm stems:placeholder         # and spite pack for each recorded piece
+pnpm exec spite fallback pieces/<id>/manifest.json --seed <seed> --update   # needs ffmpeg
+node --env-file=.env.local packages/cli/bin/spite.js publish pieces/*/manifest.json
+```
+
+In development (`pnpm --filter site dev`) the page opens on the placeholder; production builds open
+on the piece named in `site/.env.production`. `spite publish` uploads only what the store lacks and
+never replaces a file. Commit the manifest
+change and push: every branch gets a preview deployment, and `master` is production. The build
+runs `spite publish --check`, so it fails rather than deploy a manifest whose stems aren't in the
+store. See `packages/cli/README.md` for `fallback` and `publish`.
+
 ## Browser tests
 
 `pnpm test:browser` checks, in headless Chromium, Firefox and WebKit, that the player's audio is
@@ -79,10 +101,12 @@ pnpm exec playwright install chromium firefox webkit
 schema/            Music manifest JSON Schema (v0.1), examples/{valid,invalid}, CHANGELOG
 packages/engine    Pure TypeScript realization engine: no DOM, zero runtime dependencies
 packages/player    <spite-player> web component (AudioWorklet + canvas lanes view)
-packages/cli       `spite` CLI: validate, realize, bounce, audition, pack
+packages/cli       `spite` CLI: validate, realize, bounce, audition, pack, fallback, publish
 fixtures/golden/   Golden trace snapshots
 pieces/            Authored pieces (manifests and pack files only); pieces/placeholder for development
-site/              Vite page for any piece, with seed permalinks
+site/              Vite page for any piece, with seed permalinks; site/.env.production sets its default
+scripts/           Golden updates, placeholder stems, and the deploy build's stem check
+vercel.json        Hosting: build command, /stems/ rewrite to the stem store, cache headers
 openspec/          Behavioral specs and change proposals (OpenSpec)
 ```
 

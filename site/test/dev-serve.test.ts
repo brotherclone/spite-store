@@ -11,6 +11,8 @@ mkdirSync(dirs.stemsDir);
 const hex = 'ab'.repeat(32);
 const bytes = Buffer.from([82, 73, 70, 70, 0, 1, 2, 255]);
 writeFileSync(join(dirs.stemsDir, `${hex}.wav`), bytes);
+const mp3 = Buffer.from([0xff, 0xfb, 0x90, 0x64, 1, 2, 3]);
+writeFileSync(join(dirs.stemsDir, `${hex}.mp3`), mp3);
 writeFileSync(join(dirs.piecesDir, 'p', 'manifest.json'), '{"id":"p"}');
 writeFileSync(join(root, 'secret.txt'), 'nope');
 
@@ -26,6 +28,18 @@ describe('development serving', () => {
     expect(r?.status).toBe(404);
     expect(String(r!.body)).toContain('pnpm stems:placeholder');
     expect(String(r!.body)).toContain('spite pack');
+  });
+
+  it('serves a fallback recording by hash as audio/mpeg with its exact bytes', async () => {
+    const r = await serveDev(`/stems/${hex}.mp3`, dirs);
+    expect(r).toMatchObject({ status: 200, type: 'audio/mpeg' });
+    expect(Buffer.compare(r!.body as Buffer, mp3)).toBe(0);
+  });
+
+  it('answers a missing fallback with 404 and the spite fallback hint', async () => {
+    const r = await serveDev(`/stems/${'cd'.repeat(32)}.mp3`, dirs);
+    expect(r?.status).toBe(404);
+    expect(String(r!.body)).toContain('spite fallback');
   });
 
   it('serves pieces and rejects path traversal', async () => {

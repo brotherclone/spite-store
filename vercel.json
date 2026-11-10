@@ -1,0 +1,22 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "pnpm build && node scripts/deploy-check.mjs && pnpm --filter site build",
+  "outputDirectory": "site/dist",
+  "rewrites": [
+    {
+      "source": "/stems/:file",
+      "destination": "https://neukawpcem99psin.public.blob.vercel-storage.com/stems/:file"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/stems/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    },
+    {
+      "source": "/pieces/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=300, must-revalidate" }]
+    }
+  ]
+}
