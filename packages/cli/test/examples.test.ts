@@ -91,3 +91,22 @@ describe('plain-language messages', () => {
     expect(messages).toContain('expected at least 1 item(s), got 0');
   });
 });
+
+describe('fallback messages', () => {
+  const base = read('valid', 'fallback.json') as { fallback: Record<string, unknown> };
+  const errorsFor = (fallback: unknown) => validateManifest({ ...base, fallback });
+
+  it.each([
+    ['hash', { ...base.fallback, hash: 'fallback.mp3' }, '/fallback/hash', '"fallback.mp3"'],
+    ['type', { ...base.fallback, type: 'audio/ogg' }, '/fallback/type', '"audio/mpeg"'],
+    ['bars', { ...base.fallback, bars: 0 }, '/fallback/bars', 'at least 1'],
+    ['seed', { ...base.fallback, seed: undefined }, '/fallback', '"seed"'],
+    ['url', { ...base.fallback, url: 'https://example.test/a.mp3' }, '/fallback', '"url"'],
+  ])('reports a bad %s in plain language', (_, fallback, pointer, needle) => {
+    const errors = errorsFor(JSON.parse(JSON.stringify(fallback)));
+    expect(errors.map((e) => e.pointer)).toContain(pointer);
+    const message = errors.find((e) => e.pointer === pointer)!.message;
+    expect(message).toContain(needle);
+    expect(message).not.toMatch(/\^|\[0-9a-f\]|must match pattern/);
+  });
+});

@@ -9,8 +9,10 @@ export {
 } from './path.js';
 export {
   checkManifest,
+  FALLBACK_TYPES,
   type Breakpoint,
   type Clip,
+  type Fallback,
   type Manifest,
   type ManifestError,
   type PoolEntry,

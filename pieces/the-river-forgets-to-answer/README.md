@@ -6,7 +6,7 @@ pass.
 
 ## Source recordings
 
-The audio is not in the repository and is not cleared for publishing. It comes from the track's
+The recordings are cleared for publishing, but the audio is never committed. It comes from the track's
 Logic project folder, under `Collaborations/`: eight mono 48 kHz 24-bit WAVs, violin 1, violin 2,
 viola and cello, each on a close and a room mic (`Maria/<Instrument> close.wav`,
 `Maria/<Instrument> room.wav`).
@@ -50,3 +50,18 @@ re-exported or a range changes, rerun with `--update`, then `pnpm golden:update`
 
 Peak check (seeds 0–19 bounced for 64 bars): loudest peak −3.4 dBFS, no clipped samples.
 Everything is mono and centred, because the manifest schema has no panning yet.
+
+## Fallback and publishing
+
+The fallback recording, for browsers that can't play the piece generatively, is seed `spite-store`
+for 64 bars (about 2 minutes, 4 MB as MP3). After packing, and again whenever the stems or the mix
+change:
+
+```sh
+pnpm exec spite fallback pieces/the-river-forgets-to-answer/manifest.json --seed spite-store --update
+node --env-file=.env.local packages/cli/bin/spite.js publish pieces/the-river-forgets-to-answer/manifest.json
+```
+
+`spite fallback` needs `ffmpeg`. Without `--update` it only checks that the recorded fallback is
+current. Publish uploads the 24 stems and the fallback to the stem store before the manifest change
+is pushed (see the root README, "Releasing a piece").

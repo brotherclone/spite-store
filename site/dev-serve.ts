@@ -7,11 +7,12 @@ export interface DevResponse {
   body: Buffer | string;
 }
 
-const STEM = /^\/stems\/([0-9a-f]{64})\.wav$/;
+const STEM = /^\/stems\/([0-9a-f]{64})\.(wav|mp3)$/;
 
 /**
- * Resolves a development request for pieces (`/pieces/...` from `piecesDir`) or stems
- * (`/stems/<hex>.wav` from `stemsDir`). Returns null for anything else.
+ * Resolves a development request for pieces (`/pieces/...` from `piecesDir`), stems
+ * (`/stems/<hex>.wav`) or fallback recordings (`/stems/<hex>.mp3`), both from `stemsDir`. Returns
+ * null for anything else.
  */
 export async function serveDev(
   pathname: string,
@@ -19,17 +20,21 @@ export async function serveDev(
 ): Promise<DevResponse | null> {
   const stem = STEM.exec(pathname);
   if (stem) {
+    const [, hex, ext] = stem;
     try {
       return {
         status: 200,
-        type: 'audio/wav',
-        body: await readFile(resolve(dirs.stemsDir, `${stem[1]}.wav`)),
+        type: ext === 'mp3' ? 'audio/mpeg' : 'audio/wav',
+        body: await readFile(resolve(dirs.stemsDir, `${hex}.${ext}`)),
       };
     } catch {
       return {
         status: 404,
         type: 'text/plain',
-        body: `stem ${stem[1]} not found in .stems/; run pnpm stems:placeholder for the placeholder piece, or spite pack for a recorded piece`,
+        body:
+          ext === 'mp3'
+            ? `fallback recording ${hex} not found in .stems/; run spite fallback for the piece`
+            : `stem ${hex} not found in .stems/; run pnpm stems:placeholder for the placeholder piece, or spite pack for a recorded piece`,
       };
     }
   }

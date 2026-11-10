@@ -1,7 +1,13 @@
-import { SAMPLE_RATE, barFrame, type Stem } from '@spite-store/engine';
+import {
+  SAMPLE_RATE,
+  barFrame,
+  type Fallback,
+  type Manifest,
+  type Stem,
+} from '@spite-store/engine';
 import { EngineNode, defaultWorkletUrl } from './audio.js';
 import { Lanes } from './lanes.js';
-import { LoadError, loadManifest, loadPerformance, type Performance } from './loader.js';
+import { LoadError, loadManifest, loadPerformance, sha256Hex, type Performance } from './loader.js';
 import { randomSeed } from './seed.js';
 
 const FADE_SECONDS = 0.01;
@@ -31,17 +37,34 @@ const template = `
 <div part="status" role="status"></div>
 `;
 
+/** Why the player is playing the fixed recording instead of the generative performance. */
+export type FallbackReason = 'forced' | 'unsupported' | 'stems' | 'worklet';
+
+const REASON_TEXT: Record<FallbackReason, string> = {
+  forced: 'the fixed recording was requested',
+  unsupported: "this browser can't play the generative version",
+  stems: "some stems couldn't be loaded",
+  worklet: "the audio engine couldn't start",
+};
+
+/** Whether this page can run the generative player: an AudioWorklet and verified stem loads. */
+const generativeSupported = (): boolean =>
+  typeof AudioWorkletNode !== 'undefined' &&
+  globalThis.isSecureContext === true &&
+  globalThis.crypto?.subtle !== undefined;
+
 const clock = (frames: number): string => {
   const s = Math.floor(frames / SAMPLE_RATE);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 };
 
 /**
- * `<spite-player src stems seed bars>`: plays a finite performance (manifest, seed, bars) with the
- * engine renderer in an AudioWorklet, and draws its structure as lanes.
+ * `<spite-player src stems seed bars fallback>`: plays a finite performance (manifest, seed, bars)
+ * with the engine renderer in an AudioWorklet, and draws its structure as lanes. When that can't
+ * work and the manifest has a fallback recording, it plays that fixed recording instead.
  */
 export class SpitePlayer extends HTMLElement {
-  static observedAttributes = ['src', 'stems', 'seed', 'bars'];
+  static observedAttributes = ['src', 'stems', 'seed', 'bars', 'fallback'];
 
   /** For tests and advanced embeds: replaces `fetch` for manifest and stem requests. */
   fetchImpl: typeof fetch = (...args) => fetch(...args);
@@ -57,6 +80,7 @@ export class SpitePlayer extends HTMLElement {
     copy: HTMLButtonElement;
     time: HTMLElement;
     scrub: HTMLInputElement;
+    lanes: HTMLCanvasElement;
     status: HTMLElement;
   };
   private readonly lanes: Lanes;
@@ -72,6 +96,11 @@ export class SpitePlayer extends HTMLElement {
   private lastFrame = 0;
   private lastTime = 0;
   private animation = 0;
+  /** Set while playing the fixed recording; null in generative mode. */
+  private fallback: { manifest: Manifest; recording: Fallback; reason: FallbackReason } | null =
+    null;
+  private media: HTMLAudioElement | null = null;
+  private mediaUrl: string | null = null;
 
   constructor() {
     super();
@@ -86,9 +115,10 @@ export class SpitePlayer extends HTMLElement {
       copy: q('copy'),
       time: q('time'),
       scrub: q('scrub'),
+      lanes: q('lanes'),
       status: q('status'),
     };
-    this.lanes = new Lanes(q<HTMLCanvasElement>('lanes'), this);
+    this.lanes = new Lanes(this.ui.lanes, this);
     this.lanes.onSeek = (frame) => void this.seek(frame);
     this.ui.play.addEventListener('click', () => void (this.playing ? this.pause() : this.play()));
     this.ui.reroll.addEventListener('click', () => this.changePerformance(randomSeed(), this.bars));
@@ -132,8 +162,18 @@ export class SpitePlayer extends HTMLElement {
     return this.perf;
   }
 
-  /** Current position in frames. */
+  /** Why the fixed recording is playing, or null when the performance is generative. */
+  get fallbackReason(): FallbackReason | null {
+    return this.fallback?.reason ?? null;
+  }
+
+  /** Current position in frames (48 kHz, also for the fixed recording). */
   get position(): number {
+    if (this.fallback) {
+      return this.media
+        ? Math.min(this.totalFrames, Math.round(this.media.currentTime * SAMPLE_RATE))
+        : 0;
+    }
     if (!this.playing || !this.context) return this.lastFrame;
     const total = this.perf?.plan.totalFrames ?? 0;
     return Math.min(
@@ -144,6 +184,15 @@ export class SpitePlayer extends HTMLElement {
 
   get isPlaying(): boolean {
     return this.playing;
+  }
+
+  /** Length of what is loaded, in frames: the render, or the fixed recording once its length is known. */
+  private get totalFrames(): number {
+    if (this.fallback) {
+      const d = this.media?.duration;
+      return d !== undefined && Number.isFinite(d) ? Math.round(d * SAMPLE_RATE) : 0;
+    }
+    return this.perf?.plan.totalFrames ?? 0;
   }
 
   /** Sets seed and bars from the UI or a random choice, and announces it. */
@@ -182,6 +231,7 @@ export class SpitePlayer extends HTMLElement {
   private async load(): Promise<void> {
     const token = ++this.loadToken;
     await this.stop();
+    this.leaveFallback();
     this.perf = null;
     this.lanes.setPerformance(null);
     this.ui.play.disabled = true;
@@ -201,18 +251,33 @@ export class SpitePlayer extends HTMLElement {
     try {
       const manifest = await loadManifest(new URL(src, document.baseURI).href, this.fetchImpl);
       if (token !== this.loadToken) return;
-      const stemsBase = new URL(this.getAttribute('stems') ?? 'stems/', document.baseURI).href;
-      const perf = await loadPerformance({
-        manifest,
-        seed,
-        bars,
-        stemsBase: stemsBase.endsWith('/') ? stemsBase : `${stemsBase}/`,
-        cache: this.cache,
-        fetch: this.fetchImpl,
-        onProgress: (loaded, total) => {
-          if (token === this.loadToken) this.setStatus(`Loading stems ${loaded} / ${total}`);
-        },
-      });
+      if (this.hasAttribute('fallback')) {
+        if (!manifest.fallback)
+          return this.fail([`${manifest.title} has no fallback recording (fallback attribute)`]);
+        return await this.enterFallback(manifest, 'forced', token);
+      }
+      if (manifest.fallback && !generativeSupported()) {
+        return await this.enterFallback(manifest, 'unsupported', token);
+      }
+      let perf: Performance;
+      try {
+        perf = await loadPerformance({
+          manifest,
+          seed,
+          bars,
+          stemsBase: this.stemsBase,
+          cache: this.cache,
+          fetch: this.fetchImpl,
+          onProgress: (loaded, total) => {
+            if (token === this.loadToken) this.setStatus(`Loading stems ${loaded} / ${total}`);
+          },
+        });
+      } catch (error) {
+        if (!(error instanceof LoadError) || !manifest.fallback) throw error;
+        if (token !== this.loadToken) return;
+        this.dispatchEvent(new CustomEvent('error', { detail: { messages: error.messages } }));
+        return await this.enterFallback(manifest, 'stems', token, error.messages);
+      }
       if (token !== this.loadToken) return;
       this.perf = perf;
       this.lastFrame = 0;
@@ -231,6 +296,126 @@ export class SpitePlayer extends HTMLElement {
       if (token !== this.loadToken) return;
       this.fail(error instanceof LoadError ? error.messages : [String(error)]);
     }
+  }
+
+  private get stemsBase(): string {
+    const base = new URL(this.getAttribute('stems') ?? 'stems/', document.baseURI).href;
+    return base.endsWith('/') ? base : `${base}/`;
+  }
+
+  /**
+   * Switches to the manifest's fixed recording: fetches and verifies it, disables the seed
+   * controls, hides the lanes, and announces `fallback`, then `ready` once it can play.
+   */
+  private async enterFallback(
+    manifest: Manifest,
+    reason: FallbackReason,
+    token: number,
+    details: readonly string[] = [],
+  ): Promise<void> {
+    const recording = manifest.fallback!;
+    this.perf = null;
+    this.lanes.setPerformance(null);
+    this.fallback = { manifest, recording, reason };
+    this.lastFrame = 0;
+    this.ui.play.disabled = true;
+    this.ui.scrub.disabled = true;
+    this.ui.scrub.value = '0';
+    this.ui.seed.value = recording.seed;
+    this.ui.bars.value = String(recording.bars);
+    for (const control of [this.ui.seed, this.ui.reroll, this.ui.bars]) control.disabled = true;
+    this.ui.lanes.hidden = true;
+    this.updateTime(0);
+    this.setStatus('Loading the fixed recording…');
+    this.dispatchEvent(
+      new CustomEvent('fallback', {
+        detail: { reason, seed: recording.seed, bars: recording.bars },
+      }),
+    );
+
+    const hex = recording.hash.slice('sha256:'.length);
+    const url = new URL(`${hex}.mp3`, this.stemsBase).href;
+    let src = url;
+    if (globalThis.crypto?.subtle !== undefined) {
+      try {
+        const response = await this.fetchImpl(url);
+        if (!response.ok) throw new Error(`missing (HTTP ${response.status} for ${url})`);
+        const bytes = await response.arrayBuffer();
+        if ((await sha256Hex(bytes)) !== hex) throw new Error('content does not match its hash');
+        if (token !== this.loadToken) return;
+        src = this.mediaUrl = URL.createObjectURL(new Blob([bytes], { type: recording.type }));
+      } catch (error) {
+        if (token !== this.loadToken) return;
+        return this.fail([`fallback recording  ${recording.hash}  ${(error as Error).message}`]);
+      }
+    }
+    if (token !== this.loadToken) return;
+    const media = this.ensureMedia();
+    media.src = src;
+    media.load();
+    this.ui.play.disabled = false;
+    this.setStatus(
+      [`Fixed recording of seed ${recording.seed} · ${REASON_TEXT[reason]}`, ...details].join('\n'),
+    );
+    this.dispatchEvent(
+      new CustomEvent('ready', { detail: { seed: recording.seed, bars: recording.bars } }),
+    );
+  }
+
+  /** Back to generative mode: releases the recording and re-enables the seed controls. */
+  private leaveFallback(): void {
+    if (this.media) {
+      this.media.pause();
+      this.media.removeAttribute('src');
+      this.media.load();
+    }
+    if (this.mediaUrl) URL.revokeObjectURL(this.mediaUrl);
+    this.mediaUrl = null;
+    this.fallback = null;
+    for (const control of [this.ui.seed, this.ui.reroll, this.ui.bars]) control.disabled = false;
+    this.ui.lanes.hidden = false;
+  }
+
+  private ensureMedia(): HTMLAudioElement {
+    if (this.media) return this.media;
+    const media = (this.media = new Audio());
+    media.preload = 'auto';
+    const sized = () => {
+      if (!this.fallback) return;
+      this.ui.scrub.max = String(this.totalFrames);
+      this.ui.scrub.disabled = this.totalFrames === 0;
+      this.renderPosition(this.position);
+    };
+    media.addEventListener('loadedmetadata', sized);
+    media.addEventListener('durationchange', sized);
+    media.addEventListener('ended', () => {
+      if (!this.fallback) return;
+      this.playing = false;
+      cancelAnimationFrame(this.animation);
+      this.ui.play.textContent = 'Play';
+      this.renderPosition(this.totalFrames);
+      this.dispatchEvent(new CustomEvent('ended'));
+    });
+    return media;
+  }
+
+  private async playFallback(): Promise<void> {
+    const media = this.media;
+    if (!media || this.playing || this.ui.play.disabled) return;
+    if (media.ended) media.currentTime = 0;
+    try {
+      await media.play();
+    } catch (error) {
+      this.setStatus(`could not play the fixed recording: ${(error as Error).message}`, true);
+      return;
+    }
+    this.playing = true;
+    this.ui.play.textContent = 'Pause';
+    const tick = () => {
+      this.renderPosition(this.position);
+      if (this.playing) this.animation = requestAnimationFrame(tick);
+    };
+    this.animation = requestAnimationFrame(tick);
   }
 
   private async ensureAudio(): Promise<EngineNode> {
@@ -278,8 +463,17 @@ export class SpitePlayer extends HTMLElement {
   }
 
   async play(): Promise<void> {
+    if (this.fallback) return this.playFallback();
     if (!this.perf || this.playing) return;
-    const engine = await this.ensureAudio();
+    let engine: EngineNode;
+    try {
+      engine = await this.ensureAudio();
+    } catch (error) {
+      const { manifest } = this.perf;
+      if (!manifest.fallback) throw error;
+      await this.enterFallback(manifest, 'worklet', this.loadToken);
+      return this.playFallback();
+    }
     await this.context!.resume();
     if (this.lastFrame >= this.perf.plan.totalFrames) this.lastFrame = 0;
     this.lastTime = this.context!.currentTime;
@@ -295,6 +489,15 @@ export class SpitePlayer extends HTMLElement {
   }
 
   async pause(): Promise<void> {
+    if (this.fallback) {
+      if (!this.playing) return;
+      this.playing = false;
+      cancelAnimationFrame(this.animation);
+      this.ui.play.textContent = 'Play';
+      this.media?.pause();
+      this.renderPosition(this.position);
+      return;
+    }
     if (!this.playing || !this.engine) return;
     this.lastFrame = this.position;
     this.playing = false;
@@ -313,6 +516,13 @@ export class SpitePlayer extends HTMLElement {
 
   /** Moves to `frame` (clamped to the render). Playback, if running, continues from there. */
   async seek(frame: number): Promise<void> {
+    if (this.fallback) {
+      if (!this.media) return;
+      const target = Math.max(0, Math.min(Math.round(frame), this.totalFrames));
+      this.media.currentTime = target / SAMPLE_RATE;
+      this.renderPosition(target);
+      return;
+    }
     if (!this.perf) return;
     const target = Math.max(0, Math.min(Math.round(frame), this.perf.plan.totalFrames));
     if (this.playing && this.engine) {
@@ -331,14 +541,18 @@ export class SpitePlayer extends HTMLElement {
 
   /** Seeks to the start of `bar`. */
   seekToBar(bar: number): Promise<void> {
-    return this.perf ? this.seek(barFrame(this.perf.manifest, bar)) : Promise.resolve();
+    const manifest = this.fallback?.manifest ?? this.perf?.manifest;
+    return manifest ? this.seek(barFrame(manifest, bar)) : Promise.resolve();
   }
 
-  /** The current page URL with `seed` and `bars` set to this performance. */
+  /**
+   * The current page URL with `seed` and `bars` set to this performance (for the fixed recording,
+   * the seed and length it was rendered from).
+   */
   link(): string {
     const url = new URL(location.href);
-    url.searchParams.set('seed', this.seed ?? '');
-    url.searchParams.set('bars', String(this.bars));
+    url.searchParams.set('seed', this.fallback?.recording.seed ?? this.seed ?? '');
+    url.searchParams.set('bars', String(this.fallback?.recording.bars ?? this.bars));
     return url.href;
   }
 
@@ -352,7 +566,7 @@ export class SpitePlayer extends HTMLElement {
   }
 
   private updateTime(frame: number): void {
-    this.ui.time.textContent = `${clock(frame)} / ${clock(this.perf?.plan.totalFrames ?? 0)}`;
+    this.ui.time.textContent = `${clock(frame)} / ${clock(this.totalFrames)}`;
   }
 
   private renderPosition(frame: number): void {

@@ -36,7 +36,8 @@
       "type": "array",
       "minItems": 2,
       "items": { "$ref": "#/$defs/breakpoint" }
-    }
+    },
+    "fallback": { "$ref": "#/$defs/fallback" }
   },
   "$defs": {
     "id": {
@@ -138,6 +139,30 @@
       "properties": {
         "to": { "$ref": "#/$defs/id" },
         "weight": { "type": "number", "minimum": 0 }
+      }
+    },
+    "fallback": {
+      "description": "One fixed recording of the piece, for players that can't play it generatively. Ignored by realization.",
+      "type": "object",
+      "required": ["hash", "type", "seed", "bars"],
+      "additionalProperties": false,
+      "properties": {
+        "hash": {
+          "description": "sha256 of the recording file's bytes.",
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "type": { "description": "Media type of the recording.", "enum": ["audio/mpeg"] },
+        "seed": {
+          "description": "The seed the recording was rendered from.",
+          "type": "string",
+          "minLength": 1
+        },
+        "bars": {
+          "description": "The length in bars the recording was rendered for.",
+          "type": "integer",
+          "minimum": 1
+        }
       }
     },
     "breakpoint": {

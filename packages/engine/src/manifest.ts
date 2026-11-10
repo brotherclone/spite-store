@@ -55,7 +55,21 @@ export interface Manifest {
   start: string;
   sections: Section[];
   envelope?: Breakpoint[];
+  /** One fixed recording of the piece. Realization and rendering never read it. */
+  fallback?: Fallback;
 }
+
+/** A fixed recording of one performance, for players that can't play the piece generatively. */
+export interface Fallback {
+  hash: string;
+  type: 'audio/mpeg';
+  /** The seed and length the recording was rendered from. */
+  seed: string;
+  bars: number;
+}
+
+export const FALLBACK_TYPES = ['audio/mpeg'] as const;
+const FALLBACK_KEYS = ['bars', 'hash', 'seed', 'type'];
 
 /** A validation error: a JSON Pointer (RFC 6901) into the manifest and a message. */
 export interface ManifestError {
@@ -210,6 +224,23 @@ function checkStructure(m: Json): ManifestError[] {
           fail('breakpoint needs "at" and "value" in [0, 1]', 'envelope', i);
         }
       });
+    }
+  }
+  if (m.fallback !== undefined) {
+    const f = m.fallback;
+    if (!isObject(f)) {
+      fail('fallback must be an object', 'fallback');
+    } else {
+      for (const key of Object.keys(f).sort()) {
+        if (!FALLBACK_KEYS.includes(key)) fail(`unknown fallback property "${key}"`, 'fallback');
+      }
+      if (typeof f.hash !== 'string' || !HASH_PATTERN.test(f.hash))
+        fail('hash must be "sha256:" followed by 64 lowercase hex characters', 'fallback', 'hash');
+      if (!(FALLBACK_TYPES as readonly Json[]).includes(f.type))
+        fail(`type must be one of ${FALLBACK_TYPES.join(', ')}`, 'fallback', 'type');
+      if (typeof f.seed !== 'string' || f.seed.length === 0)
+        fail('seed must be a non-empty string', 'fallback', 'seed');
+      if (!isInt(f.bars, 1)) fail('bars must be a positive integer', 'fallback', 'bars');
     }
   }
   return errors;

@@ -305,5 +305,11 @@
         }
       ]
     }
-  ]
+  ],
+  "fallback": {
+    "hash": "sha256:aeb652888231657af3ffc1206dc5283428b97a5075d261767bf5587338660327",
+    "type": "audio/mpeg",
+    "seed": "spite-store",
+    "bars": 64
+  }
 }

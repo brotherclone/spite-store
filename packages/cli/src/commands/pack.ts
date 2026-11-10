@@ -1,9 +1,16 @@
-import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { decodeWav } from '@spite-store/engine';
 import { parse } from '../args.js';
-import { EXIT_INVALID, EXIT_OK, EXIT_USAGE, UsageError, loadManifest } from '../common.js';
+import {
+  EXIT_INVALID,
+  EXIT_OK,
+  EXIT_USAGE,
+  UsageError,
+  loadManifest,
+  rewriteJson,
+  sha256,
+} from '../common.js';
 import {
   checkPackFile,
   planSlices,
@@ -14,32 +21,9 @@ import {
 import { DEFAULT_STEMS_DIR } from '../stems.js';
 import { sliceWav } from '../wavslice.js';
 
-const sha256 = (bytes: Uint8Array): string =>
-  `sha256:${createHash('sha256').update(bytes).digest('hex')}`;
-
 function fail(lines: readonly string[]): number {
   for (const line of lines) console.error(line);
   return EXIT_USAGE;
-}
-
-/** Formats JSON with the repository's Prettier config when Prettier can be resolved. */
-async function formatJson(text: string, file: string): Promise<string> {
-  try {
-    const name = 'prettier';
-    const prettier = (await import(name)) as typeof import('prettier');
-    const options = (await prettier.resolveConfig(file)) ?? {};
-    return await prettier.format(text, { ...options, filepath: file });
-  } catch {
-    return text;
-  }
-}
-
-/** Rewrites hash strings in a JSON file, leaving the file alone when nothing changes. */
-async function rewriteJson(file: string, edit: (data: never) => boolean): Promise<boolean> {
-  const data = JSON.parse(readFileSync(file, 'utf8')) as never;
-  if (!edit(data)) return false;
-  writeFileSync(file, await formatJson(JSON.stringify(data, null, 2) + '\n', file));
-  return true;
 }
 
 export async function packCommand(argv: string[]): Promise<number> {
