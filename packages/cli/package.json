@@ -17,6 +17,7 @@
   "dependencies": {
     "@spite-store/engine": "workspace:*",
     "@spite-store/schema": "workspace:*",
+    "@vercel/blob": "^2.9.0",
     "ajv": "^8.20.0"
   }
 }

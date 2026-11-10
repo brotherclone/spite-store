@@ -1,0 +1,158 @@
+{
+  "sources": {
+    "cello-close": {
+      "file": "Maria/Cello close.wav",
+      "sha256": "sha256:dc67cfa36db859a1cfa46afe025efc4a57742fe49b4c65c2829141317963b948"
+    },
+    "cello-room": {
+      "file": "Maria/Cello room.wav",
+      "sha256": "sha256:2ce93f0b6b94f23e48fce9811fb60a45c7b453fd8039f1f7e3fbc3dc1d683dbb"
+    },
+    "viola-close": {
+      "file": "Maria/Viola close.wav",
+      "sha256": "sha256:bff3edb3dd06afd1752e7dc843a89f89dbac7e493af8497ed6802bef817424bb"
+    },
+    "viola-room": {
+      "file": "Maria/Viola room.wav",
+      "sha256": "sha256:a492fa825573564c643337b960b664246fb2480a72bca1d35372d1434ea1d219"
+    },
+    "vio1-close": {
+      "file": "Maria/Vio1 close.wav",
+      "sha256": "sha256:8fb3534af38eac97e302f5bb639ab66bd181b4d256687eefbbd37ec346ccdd80"
+    },
+    "vio1-room": {
+      "file": "Maria/Vio1 room.wav",
+      "sha256": "sha256:59e358037d9bf6cb57cfa62987d344182cc7c2026092fae9984fd7d4acae52e4"
+    },
+    "vio2-close": {
+      "file": "Maria/Vio2 close.wav",
+      "sha256": "sha256:0474277d2dbd49d4b31c3e3fae38e1387d02d6802762452d98faa939d8d475c6"
+    },
+    "vio2-room": {
+      "file": "Maria/Vio2 room.wav",
+      "sha256": "sha256:0c370c55e1da3e8020a2acc20926948632dd10ff560a9051c70449a24596e3a5"
+    }
+  },
+  "clips": {
+    "cello-close-1": {
+      "source": "cello-close",
+      "startBar": 0,
+      "bars": 5
+    },
+    "cello-close-2": {
+      "source": "cello-close",
+      "startBar": 5,
+      "bars": 5
+    },
+    "cello-close-3": {
+      "source": "cello-close",
+      "startBar": 10,
+      "bars": 5
+    },
+    "cello-room-1": {
+      "source": "cello-room",
+      "startBar": 0,
+      "bars": 5
+    },
+    "cello-room-2": {
+      "source": "cello-room",
+      "startBar": 5,
+      "bars": 5
+    },
+    "cello-room-3": {
+      "source": "cello-room",
+      "startBar": 10,
+      "bars": 5
+    },
+    "viola-close-1": {
+      "source": "viola-close",
+      "startBar": 0,
+      "bars": 5
+    },
+    "viola-close-2": {
+      "source": "viola-close",
+      "startBar": 5,
+      "bars": 5
+    },
+    "viola-close-3": {
+      "source": "viola-close",
+      "startBar": 10,
+      "bars": 5
+    },
+    "viola-room-1": {
+      "source": "viola-room",
+      "startBar": 0,
+      "bars": 5
+    },
+    "viola-room-2": {
+      "source": "viola-room",
+      "startBar": 5,
+      "bars": 5
+    },
+    "viola-room-3": {
+      "source": "viola-room",
+      "startBar": 10,
+      "bars": 5
+    },
+    "vio1-close-1": {
+      "source": "vio1-close",
+      "startBar": 0,
+      "bars": 5
+    },
+    "vio1-close-2": {
+      "source": "vio1-close",
+      "startBar": 5,
+      "bars": 5
+    },
+    "vio1-close-3": {
+      "source": "vio1-close",
+      "startBar": 10,
+      "bars": 5
+    },
+    "vio1-room-1": {
+      "source": "vio1-room",
+      "startBar": 0,
+      "bars": 5
+    },
+    "vio1-room-2": {
+      "source": "vio1-room",
+      "startBar": 5,
+      "bars": 5
+    },
+    "vio1-room-3": {
+      "source": "vio1-room",
+      "startBar": 10,
+      "bars": 5
+    },
+    "vio2-close-1": {
+      "source": "vio2-close",
+      "startBar": 0,
+      "bars": 5
+    },
+    "vio2-close-2": {
+      "source": "vio2-close",
+      "startBar": 5,
+      "bars": 5
+    },
+    "vio2-close-3": {
+      "source": "vio2-close",
+      "startBar": 10,
+      "bars": 5
+    },
+    "vio2-room-1": {
+      "source": "vio2-room",
+      "startBar": 0,
+      "bars": 5
+    },
+    "vio2-room-2": {
+      "source": "vio2-room",
+      "startBar": 5,
+      "bars": 5
+    },
+    "vio2-room-3": {
+      "source": "vio2-room",
+      "startBar": 10,
+      "bars": 5
+    }
+  }
+}

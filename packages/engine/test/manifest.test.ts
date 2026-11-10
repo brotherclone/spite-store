@@ -119,3 +119,32 @@ describe('checkManifest', () => {
     ).toEqual(['/clips/kick-a/hash']);
   });
 });
+
+describe('checkManifest: fallback', () => {
+  const fallback = {
+    hash: 'sha256:' + 'ab'.repeat(32),
+    type: 'audio/mpeg',
+    seed: 'spite-store',
+    bars: 64,
+  } as const;
+  const withFallback = (f: unknown) => checkManifest({ ...base(), fallback: f });
+
+  it('accepts a valid fallback', () => {
+    expect(withFallback(fallback)).toEqual([]);
+  });
+
+  it.each([
+    ['a file name as hash', { ...fallback, hash: 'fallback.mp3' }, '/fallback/hash'],
+    ['an unsupported type', { ...fallback, type: 'audio/ogg' }, '/fallback/type'],
+    ['zero bars', { ...fallback, bars: 0 }, '/fallback/bars'],
+    ['a missing seed', { hash: fallback.hash, type: fallback.type, bars: 64 }, '/fallback/seed'],
+    ['an unknown field', { ...fallback, url: 'https://example.test/a.mp3' }, '/fallback'],
+    ['a non-object', 'fallback.mp3', '/fallback'],
+  ])('rejects %s', (_, f, expected) => {
+    expect(withFallback(f).map((e) => e.pointer)).toEqual([expected]);
+  });
+
+  it('names the unknown field', () => {
+    expect(withFallback({ ...fallback, url: 'x' })[0]!.message).toContain('"url"');
+  });
+});

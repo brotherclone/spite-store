@@ -1,0 +1,8 @@
+{
+  "manifest": "pieces/placeholder/manifest.json",
+  "seed": 42,
+  "durationBars": 16,
+  "renderFormat": 1,
+  "frames": 1368000,
+  "float32Sha256": "792382d45a4e5041a7f4c8ea1493e649ff49e7e28bc174931492f4d3e216e633"
+}

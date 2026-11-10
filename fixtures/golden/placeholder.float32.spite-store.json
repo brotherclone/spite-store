@@ -1,0 +1,8 @@
+{
+  "manifest": "pieces/placeholder/manifest.json",
+  "seed": "spite-store",
+  "durationBars": 16,
+  "renderFormat": 1,
+  "frames": 1392000,
+  "float32Sha256": "a1dbbc9a128f71b6277ff22e459f9a4689b5565bfd3976d91497b5e551e0bddf"
+}

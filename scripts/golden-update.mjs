@@ -5,24 +5,29 @@ import { join } from 'node:path';
 import { TRACE_FORMAT, canonicalTrace, realize } from '@spite-store/engine';
 
 const root = join(import.meta.dirname, '..');
-const manifestPath = 'schema/examples/valid/minimal.json';
-const manifest = JSON.parse(readFileSync(join(root, manifestPath), 'utf8'));
 const durationBars = 64;
+const tracePieces = [
+  ['minimal', 'schema/examples/valid/minimal.json'],
+  ['the-river-forgets-to-answer', 'pieces/the-river-forgets-to-answer/manifest.json'],
+];
 
-for (const seed of [0, 42, 'spite-store']) {
-  const trace = realize(manifest, seed, { durationBars });
-  const traceHash = createHash('sha256').update(canonicalTrace(trace)).digest('hex');
-  const file = join(root, 'fixtures/golden', `minimal.${seed}.json`);
-  const snapshot = {
-    manifest: manifestPath,
-    seed,
-    durationBars,
-    traceFormat: TRACE_FORMAT,
-    traceHash,
-    trace,
-  };
-  writeFileSync(file, JSON.stringify(snapshot, null, 2) + '\n');
-  console.log(`${file}  ${traceHash}  (${trace.length} events)`);
+for (const [name, manifestPath] of tracePieces) {
+  const manifest = JSON.parse(readFileSync(join(root, manifestPath), 'utf8'));
+  for (const seed of [0, 42, 'spite-store']) {
+    const trace = realize(manifest, seed, { durationBars });
+    const traceHash = createHash('sha256').update(canonicalTrace(trace)).digest('hex');
+    const file = join(root, 'fixtures/golden', `${name}.${seed}.json`);
+    const snapshot = {
+      manifest: manifestPath,
+      seed,
+      durationBars,
+      traceFormat: TRACE_FORMAT,
+      traceHash,
+      trace,
+    };
+    writeFileSync(file, JSON.stringify(snapshot, null, 2) + '\n');
+    console.log(`${file}  ${traceHash}  (${trace.length} events)`);
+  }
 }
 
 // Golden audio: the placeholder piece rendered with stems synthesized in memory.
@@ -64,4 +69,29 @@ for (const seed of [0, 42, 'spite-store']) {
   const file = join(root, 'fixtures/golden', `placeholder.audio.${seed}.json`);
   writeFileSync(file, JSON.stringify(snapshot, null, 2) + '\n');
   console.log(`${file}  ${snapshot.wavSha256}  (${frames} frames)`);
+}
+
+// Float32 goldens: what the browser worklet outputs (each renderer sample rounded to float32).
+const { planRender, realizeForRender, renderAll } = await import('@spite-store/engine');
+for (const seed of [0, 42, 'spite-store']) {
+  const durationBars = 16;
+  const { events, endBar } = realizeForRender(placeholder, seed, { durationBars });
+  const plan = planRender(placeholder, events, endBar, stems);
+  const { left, right } = renderAll(plan, stems);
+  const interleaved = new Float32Array(plan.totalFrames * 2);
+  for (let f = 0; f < plan.totalFrames; f++) {
+    interleaved[2 * f] = left[f];
+    interleaved[2 * f + 1] = right[f];
+  }
+  const snapshot = {
+    manifest: placeholderPath,
+    seed,
+    durationBars,
+    renderFormat: RENDER_FORMAT,
+    frames: plan.totalFrames,
+    float32Sha256: sha(new Uint8Array(interleaved.buffer)),
+  };
+  const file = join(root, 'fixtures/golden', `placeholder.float32.${seed}.json`);
+  writeFileSync(file, JSON.stringify(snapshot, null, 2) + '\n');
+  console.log(`${file}  ${snapshot.float32Sha256}`);
 }

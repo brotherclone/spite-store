@@ -25,10 +25,15 @@ function firstDifference(expected: TraceEvent[], actual: TraceEvent[]): string {
   return 'traces are equal but hashes differ (hash function changed?)';
 }
 
+// Each piece's traces need only its manifest, never stems.
+const snapshots = ['minimal', 'the-river-forgets-to-answer'].flatMap((piece) =>
+  ['0', '42', 'spite-store'].map((seed) => `${piece}.${seed}.json`),
+);
+
 describe('golden traces', () => {
-  it.each(['0', '42', 'spite-store'])('minimal.%s.json matches', (name) => {
+  it.each(snapshots)('%s matches', (file) => {
     const snapshot = JSON.parse(
-      readFileSync(join(root, 'fixtures/golden', `minimal.${name}.json`), 'utf8'),
+      readFileSync(join(root, 'fixtures/golden', file), 'utf8'),
     ) as Snapshot;
     expect(snapshot.traceFormat, 'traceFormat changed: regenerate with pnpm golden:update').toBe(
       TRACE_FORMAT,
@@ -39,7 +44,7 @@ describe('golden traces', () => {
     if (hash !== snapshot.traceHash) {
       expect.fail(
         `Golden drift for seed ${JSON.stringify(snapshot.seed)}: ${firstDifference(snapshot.trace, trace)}. ` +
-          'If intended, bump TRACE_FORMAT and run pnpm golden:update.',
+          'If intended, run pnpm golden:update (and bump TRACE_FORMAT if the engine changed).',
       );
     }
   });

@@ -9,8 +9,10 @@ export {
 } from './path.js';
 export {
   checkManifest,
+  FALLBACK_TYPES,
   type Breakpoint,
   type Clip,
+  type Fallback,
   type Manifest,
   type ManifestError,
   type PoolEntry,
@@ -40,6 +42,7 @@ export {
   realizeForRender,
   renderAll,
   renderBlock,
+  renderBlockInto,
   renderWav,
   type RenderBlock,
   type RenderPlan,
@@ -47,3 +50,4 @@ export {
   type Voice,
 } from './audio/render.js';
 export { synthesizeClip, synthesizeStemWav, type ClipRecipe } from './audio/synth.js';
+export { realizeTimeline, type Visit } from './timeline.js';

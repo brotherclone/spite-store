@@ -2,6 +2,9 @@
 import { EXIT_OK, EXIT_USAGE, USAGE, UsageError } from './common.js';
 import { auditionCommand } from './commands/audition.js';
 import { bounceCommand } from './commands/bounce.js';
+import { fallbackCommand } from './commands/fallback.js';
+import { packCommand } from './commands/pack.js';
+import { publishCommand } from './commands/publish.js';
 import { realizeCommand } from './commands/realize.js';
 import { validateCommand } from './commands/validate.js';
 
@@ -17,8 +20,11 @@ function main(argv: string[]): number | Promise<number> {
     case 'audition':
       return auditionCommand(rest);
     case 'pack':
-      console.error(`spite ${command}: not implemented yet`);
-      return EXIT_USAGE;
+      return packCommand(rest);
+    case 'fallback':
+      return fallbackCommand(rest);
+    case 'publish':
+      return publishCommand(rest);
     case '-h':
     case '--help':
     case 'help':

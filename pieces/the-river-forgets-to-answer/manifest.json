@@ -1,0 +1,315 @@
+{
+  "$schema": "../../schema/manifest.schema.json",
+  "specVersion": "0.1",
+  "id": "the-river-forgets-to-answer",
+  "title": "The River Forgets to Answer",
+  "tempo": [
+    {
+      "bar": 0,
+      "bpm": 63,
+      "meter": [7, 8]
+    }
+  ],
+  "clips": {
+    "cello-close-1": {
+      "hash": "sha256:0628c37746ae10a7ba2af8d92335fff865ce726bcebd73d6d75a2cf539ae48ee",
+      "lengthBars": 4
+    },
+    "cello-close-2": {
+      "hash": "sha256:481127661eb91b7c4e84186ad48b1b63ffc63cba20ace744b2a49ca727605f6e",
+      "lengthBars": 4
+    },
+    "cello-close-3": {
+      "hash": "sha256:264213aebed2d85a642ba080896821c8e78442da5c15149796e30982724530a2",
+      "lengthBars": 4
+    },
+    "cello-room-1": {
+      "hash": "sha256:fdb0d446bfe355d6d5b0f683131df1c32299d0f180cdcbe09dd385d159388bf1",
+      "lengthBars": 4,
+      "excludes": ["cello-close-2", "cello-close-3"]
+    },
+    "cello-room-2": {
+      "hash": "sha256:f72cd3c4231ca9c6aeea3f00ff6149e63c5065a518af1d8d81fb5329e6ecacd5",
+      "lengthBars": 4,
+      "excludes": ["cello-close-1", "cello-close-3"]
+    },
+    "cello-room-3": {
+      "hash": "sha256:185b8ddc14c7e171c781a5f5e3455367e82e3d590a41167dee14c22aff4b9df8",
+      "lengthBars": 4,
+      "excludes": ["cello-close-1", "cello-close-2"]
+    },
+    "viola-close-1": {
+      "hash": "sha256:d8da536416f99fc2093c86e91fce65f70f97242b4c067e314d1e2a3043297add",
+      "lengthBars": 4
+    },
+    "viola-close-2": {
+      "hash": "sha256:155c1fd93a770b0c5a6ff2e261f5885fd228d4054b252d318714383b3d9959e8",
+      "lengthBars": 4
+    },
+    "viola-close-3": {
+      "hash": "sha256:fe0d0ad8dc4c26d0e9af5b45cadbd1a7573b8f4cb5815b0e1937e46fa5e48698",
+      "lengthBars": 4
+    },
+    "viola-room-1": {
+      "hash": "sha256:eb707eaaddf16faf72c1002fd4fe94712514191d4f6440c88facf7eacb265bdc",
+      "lengthBars": 4,
+      "excludes": ["viola-close-2", "viola-close-3"]
+    },
+    "viola-room-2": {
+      "hash": "sha256:df702e4c1966b2194f6944c0377b76655cc7747686e22da174ac7efe0b6b8961",
+      "lengthBars": 4,
+      "excludes": ["viola-close-1", "viola-close-3"]
+    },
+    "viola-room-3": {
+      "hash": "sha256:05b92b15c4141885012b330463c17d29065657b54752d773b472bc55e2579aa5",
+      "lengthBars": 4,
+      "excludes": ["viola-close-1", "viola-close-2"]
+    },
+    "vio1-close-1": {
+      "hash": "sha256:2194f8bcb04fc51a0a2f88e4b1ebc7a53588333e007a6e5754a2336d4c879da3",
+      "lengthBars": 4
+    },
+    "vio1-close-2": {
+      "hash": "sha256:cc3adb05b2234e881b6446c12a60468a1cbfa803b66248d5621ac098a59c2577",
+      "lengthBars": 4
+    },
+    "vio1-close-3": {
+      "hash": "sha256:636249508a09247931e55fb6ec622bcf67dccb8ef376c2b6b2a8e0b6c1dec2ef",
+      "lengthBars": 4
+    },
+    "vio1-room-1": {
+      "hash": "sha256:355fa9d85dc36c8dec557c86a717fa91652174be43b9bddfb88c7c2a2498a5bc",
+      "lengthBars": 4,
+      "excludes": ["vio1-close-2", "vio1-close-3"]
+    },
+    "vio1-room-2": {
+      "hash": "sha256:3ddedcce501c22a38664d8a4e58b2c85ac13feccb410170abc006f37bfb33d6e",
+      "lengthBars": 4,
+      "excludes": ["vio1-close-1", "vio1-close-3"]
+    },
+    "vio1-room-3": {
+      "hash": "sha256:f98fb9501175477bb1766bb8181d25a628ddea0b47a5e3b35e6f426d531466b6",
+      "lengthBars": 4,
+      "excludes": ["vio1-close-1", "vio1-close-2"]
+    },
+    "vio2-close-1": {
+      "hash": "sha256:62567399325ead776b510068de14bad4286aeeed8afb3e1b5622f07cdbfc30c6",
+      "lengthBars": 4
+    },
+    "vio2-close-2": {
+      "hash": "sha256:c7d08d5260e32ea0abfdca462da77ece67da53a4d1a61c2cd1b57085686a927e",
+      "lengthBars": 4
+    },
+    "vio2-close-3": {
+      "hash": "sha256:cd27b470fc08afd424e07781f40ba48ba34bd97a8e0fcd3386459c631de51547",
+      "lengthBars": 4
+    },
+    "vio2-room-1": {
+      "hash": "sha256:5908a4fcf36b7867b80c85adddbd00927a14bf79a39a30e9a886ab853345806a",
+      "lengthBars": 4,
+      "excludes": ["vio2-close-2", "vio2-close-3"]
+    },
+    "vio2-room-2": {
+      "hash": "sha256:8c02777c2fa20cde2e9eaf7fb781f48abf7f3f7897824ba69de43e8cbd2255b2",
+      "lengthBars": 4,
+      "excludes": ["vio2-close-1", "vio2-close-3"]
+    },
+    "vio2-room-3": {
+      "hash": "sha256:cb956f055ad155736ec2c47c1bb5edf0b05d1d2d64ed15c182dfd11e5bbcc0cd",
+      "lengthBars": 4,
+      "excludes": ["vio2-close-1", "vio2-close-2"]
+    }
+  },
+  "start": "phrase",
+  "sections": [
+    {
+      "id": "phrase",
+      "lengthBars": 4,
+      "maxVisits": 8,
+      "slots": [
+        {
+          "id": "cello-close",
+          "enter": 0.8,
+          "gain": 0.5,
+          "noRepeat": 1,
+          "pool": [
+            {
+              "clip": "cello-close-1",
+              "weight": 1
+            },
+            {
+              "clip": "cello-close-2",
+              "weight": 1
+            },
+            {
+              "clip": "cello-close-3",
+              "weight": 1
+            }
+          ]
+        },
+        {
+          "id": "cello-room",
+          "enter": 0.5,
+          "gain": 0.4,
+          "pool": [
+            {
+              "clip": "cello-room-1",
+              "weight": 1
+            },
+            {
+              "clip": "cello-room-2",
+              "weight": 1
+            },
+            {
+              "clip": "cello-room-3",
+              "weight": 1
+            }
+          ]
+        },
+        {
+          "id": "viola-close",
+          "enter": 0.8,
+          "gain": 0.5,
+          "noRepeat": 1,
+          "pool": [
+            {
+              "clip": "viola-close-1",
+              "weight": 1
+            },
+            {
+              "clip": "viola-close-2",
+              "weight": 1
+            },
+            {
+              "clip": "viola-close-3",
+              "weight": 1
+            }
+          ]
+        },
+        {
+          "id": "viola-room",
+          "enter": 0.5,
+          "gain": 0.4,
+          "pool": [
+            {
+              "clip": "viola-room-1",
+              "weight": 1
+            },
+            {
+              "clip": "viola-room-2",
+              "weight": 1
+            },
+            {
+              "clip": "viola-room-3",
+              "weight": 1
+            }
+          ]
+        },
+        {
+          "id": "vio1-close",
+          "enter": 0.8,
+          "gain": 0.5,
+          "noRepeat": 1,
+          "pool": [
+            {
+              "clip": "vio1-close-1",
+              "weight": 1
+            },
+            {
+              "clip": "vio1-close-2",
+              "weight": 1
+            },
+            {
+              "clip": "vio1-close-3",
+              "weight": 1
+            }
+          ]
+        },
+        {
+          "id": "vio1-room",
+          "enter": 0.5,
+          "gain": 0.4,
+          "pool": [
+            {
+              "clip": "vio1-room-1",
+              "weight": 1
+            },
+            {
+              "clip": "vio1-room-2",
+              "weight": 1
+            },
+            {
+              "clip": "vio1-room-3",
+              "weight": 1
+            }
+          ]
+        },
+        {
+          "id": "vio2-close",
+          "enter": 0.8,
+          "gain": 0.5,
+          "noRepeat": 1,
+          "pool": [
+            {
+              "clip": "vio2-close-1",
+              "weight": 1
+            },
+            {
+              "clip": "vio2-close-2",
+              "weight": 1
+            },
+            {
+              "clip": "vio2-close-3",
+              "weight": 1
+            }
+          ]
+        },
+        {
+          "id": "vio2-room",
+          "enter": 0.5,
+          "gain": 0.4,
+          "pool": [
+            {
+              "clip": "vio2-room-1",
+              "weight": 1
+            },
+            {
+              "clip": "vio2-room-2",
+              "weight": 1
+            },
+            {
+              "clip": "vio2-room-3",
+              "weight": 1
+            }
+          ]
+        }
+      ],
+      "next": [
+        {
+          "to": "phrase",
+          "weight": 2
+        },
+        {
+          "to": "breath",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "id": "breath",
+      "lengthBars": 1,
+      "next": [
+        {
+          "to": "phrase",
+          "weight": 1
+        }
+      ]
+    }
+  ],
+  "fallback": {
+    "hash": "sha256:aeb652888231657af3ffc1206dc5283428b97a5075d261767bf5587338660327",
+    "type": "audio/mpeg",
+    "seed": "spite-store",
+    "bars": 64
+  }
+}

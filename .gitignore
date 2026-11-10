@@ -1,7 +1,7 @@
 /tmp
 /out-tsc
 
-/node_modules
+node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -30,3 +30,12 @@ coverage/
 
 # Locally generated stems (content-addressed by sha256)
 .stems/
+
+# Vitest browser-mode screenshots
+.vitest/
+
+# Local environment and Vercel project link (tokens). Committed env files such as
+# site/.env.production hold no secrets and stay tracked.
+.env
+.env*.local
+.vercel/
