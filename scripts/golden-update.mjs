@@ -5,24 +5,29 @@ import { join } from 'node:path';
 import { TRACE_FORMAT, canonicalTrace, realize } from '@spite-store/engine';
 
 const root = join(import.meta.dirname, '..');
-const manifestPath = 'schema/examples/valid/minimal.json';
-const manifest = JSON.parse(readFileSync(join(root, manifestPath), 'utf8'));
 const durationBars = 64;
+const tracePieces = [
+  ['minimal', 'schema/examples/valid/minimal.json'],
+  ['the-river-forgets-to-answer', 'pieces/the-river-forgets-to-answer/manifest.json'],
+];
 
-for (const seed of [0, 42, 'spite-store']) {
-  const trace = realize(manifest, seed, { durationBars });
-  const traceHash = createHash('sha256').update(canonicalTrace(trace)).digest('hex');
-  const file = join(root, 'fixtures/golden', `minimal.${seed}.json`);
-  const snapshot = {
-    manifest: manifestPath,
-    seed,
-    durationBars,
-    traceFormat: TRACE_FORMAT,
-    traceHash,
-    trace,
-  };
-  writeFileSync(file, JSON.stringify(snapshot, null, 2) + '\n');
-  console.log(`${file}  ${traceHash}  (${trace.length} events)`);
+for (const [name, manifestPath] of tracePieces) {
+  const manifest = JSON.parse(readFileSync(join(root, manifestPath), 'utf8'));
+  for (const seed of [0, 42, 'spite-store']) {
+    const trace = realize(manifest, seed, { durationBars });
+    const traceHash = createHash('sha256').update(canonicalTrace(trace)).digest('hex');
+    const file = join(root, 'fixtures/golden', `${name}.${seed}.json`);
+    const snapshot = {
+      manifest: manifestPath,
+      seed,
+      durationBars,
+      traceFormat: TRACE_FORMAT,
+      traceHash,
+      trace,
+    };
+    writeFileSync(file, JSON.stringify(snapshot, null, 2) + '\n');
+    console.log(`${file}  ${traceHash}  (${trace.length} events)`);
+  }
 }
 
 // Golden audio: the placeholder piece rendered with stems synthesized in memory.

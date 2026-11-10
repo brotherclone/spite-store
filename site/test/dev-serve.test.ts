@@ -25,6 +25,7 @@ describe('development serving', () => {
     const r = await serveDev(`/stems/${'cd'.repeat(32)}.wav`, dirs);
     expect(r?.status).toBe(404);
     expect(String(r!.body)).toContain('pnpm stems:placeholder');
+    expect(String(r!.body)).toContain('spite pack');
   });
 
   it('serves pieces and rejects path traversal', async () => {

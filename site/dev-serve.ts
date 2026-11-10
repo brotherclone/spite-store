@@ -29,7 +29,7 @@ export async function serveDev(
       return {
         status: 404,
         type: 'text/plain',
-        body: `stem ${stem[1]} not found in .stems/; run pnpm stems:placeholder`,
+        body: `stem ${stem[1]} not found in .stems/; run pnpm stems:placeholder for the placeholder piece, or spite pack for a recorded piece`,
       };
     }
   }

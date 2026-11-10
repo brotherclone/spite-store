@@ -18,10 +18,12 @@ Commands:
   audition <manifest.json> [--seeds 4 | --seed <seed>...] [--bars 16] [--stems .stems]
            [--out <reel.wav>] [--no-play]
       Render several seeds into one reel (2 s apart) and play it (afplay, macOS).
-  pack
-      (not implemented yet)
+  pack <manifest.json> --source <dir> [--stems .stems] [--update]
+      Cut the clips listed in the pack.json beside the manifest from recordings under --source
+      into stems, and check (or with --update, rewrite) the manifest's clip hashes.
 
-Exit codes: 0 success, 1 invalid manifest, 2 usage error, unreadable file or missing stem.`;
+Exit codes: 0 success, 1 invalid manifest or changed hashes, 2 usage error, unreadable file,
+missing stem or unusable source.`;
 
 /** Thrown for bad command-line usage; reported with the usage text and exit code 2. */
 export class UsageError extends Error {}

@@ -7,9 +7,22 @@ export interface HistoryLike {
   replaceState(data: unknown, unused: string, url: string): void;
 }
 
-/** Passes `?seed=` and `?bars=` to the player. Without a seed the player picks a random one. */
+const PIECE_ID = /^[a-z0-9][a-z0-9_-]{0,63}$/;
+export const DEFAULT_PIECE = 'placeholder';
+
+/** The manifest URL for `?piece=`, falling back to the placeholder when absent or not a valid id. */
+export function manifestUrl(href: string): string {
+  const piece = new URL(href).searchParams.get('piece');
+  return `/pieces/${piece !== null && PIECE_ID.test(piece) ? piece : DEFAULT_PIECE}/manifest.json`;
+}
+
+/**
+ * Passes `?piece=`, `?seed=` and `?bars=` to the player. Without a seed the player picks a random
+ * one. The player batches attribute changes, so this all becomes a single load.
+ */
 export function applyQuery(player: PlayerLike, href: string): void {
   const params = new URL(href).searchParams;
+  player.setAttribute('src', manifestUrl(href));
   const seed = params.get('seed');
   const bars = params.get('bars');
   if (seed) player.setAttribute('seed', seed);
