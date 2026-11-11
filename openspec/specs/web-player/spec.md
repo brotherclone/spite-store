@@ -7,7 +7,7 @@ Plays a piece in the browser as `<spite-player>`, an embeddable element that tur
 ## Requirements
 
 ### Requirement: Element configuration
-The player SHALL be a custom element named `spite-player`, usable in any HTML page without a framework. It SHALL read the attributes `src` (manifest URL, required), `stems` (base URL for stems, default `stems/` relative to the page), `seed` (optional) and `bars` (positive integer, default 64). Changing `src`, `stems`, `seed` or `bars` while connected SHALL stop playback and load the new performance. A performance is fully identified by (manifest, seed, bars). Seeds follow the engine's rules, and a seed attribute is a string, so `seed="42"` is the seed `42`.
+The player SHALL be a custom element named `spite-player`, usable in any HTML page without a framework. It SHALL read the attributes `src` (manifest URL, required), `stems` (base URL for stems, default `stems/` relative to the page), `seed` (optional), `bars` (positive integer, default 64) and `fallback` (boolean, forces fallback mode). Changing `src`, `stems`, `seed`, `bars` or `fallback` while connected SHALL stop playback and load the new performance. A performance is fully identified by (manifest, seed, bars). Seeds follow the engine's rules, and a seed attribute is a string, so `seed="42"` is the seed `42`.
 
 #### Scenario: Minimal embed
 - **WHEN** a page contains `<spite-player src="/pieces/placeholder/manifest.json" stems="/stems/" seed="hello" bars="16">` and the referenced files are served
@@ -40,19 +40,23 @@ For a given (manifest, seed, bars), the player SHALL play exactly the trace and 
 - **THEN** the canonical JSON of its trace hashes to the same value as `spite realize pieces/placeholder/manifest.json --seed 42 --bars 16 --json`
 
 ### Requirement: Loading and stem verification
-After realizing the performance, the player SHALL fetch only the stems the performance uses, from `<stems><hex>.wav`, in parallel. It SHALL verify each stem's sha256 against its hash, decode it with the engine's WAV decoder (not the browser's audio decoder), and show progress as a count of stems loaded out of stems needed. Play SHALL be enabled only once every needed stem is loaded. If the manifest cannot be fetched or is invalid, or any stem is missing, fails its hash or cannot be decoded, the player SHALL show an error naming the problem (the manifest's validation messages, or each failing stem's clip ids and hash) and keep play disabled.
+After realizing the performance, the player SHALL fetch only the stems the performance uses, from `<stems><hex>.wav`, in parallel. It SHALL verify each stem's sha256 against its hash, decode it with the engine's WAV decoder (not the browser's audio decoder), and show progress as a count of stems loaded out of stems needed. Play SHALL be enabled only once every needed stem is loaded. If the manifest cannot be fetched or is invalid, the player SHALL show an error naming the problem (the manifest's validation messages) and keep play disabled. If any stem is missing, fails its hash or cannot be decoded, the player SHALL fire `error` naming each failing stem's clip ids and hash, and then either switch to fallback mode, when the manifest declares a fallback, or show that error and keep play disabled.
 
 #### Scenario: Only needed stems are fetched
 - **WHEN** a performance uses 5 of a manifest's 7 clips
 - **THEN** exactly 5 stem requests are made and progress reaches "5 / 5"
 
 #### Scenario: Hash mismatch
-- **WHEN** the server returns a file for hash `H` whose bytes do not hash to `H`
+- **WHEN** the server returns a file for hash `H` whose bytes do not hash to `H`, and the manifest has no fallback
 - **THEN** the player shows an error naming `H` and the clip ids that use it, and play stays disabled
+
+#### Scenario: Hash mismatch with a fallback
+- **WHEN** the server returns a file for hash `H` whose bytes do not hash to `H`, and the manifest declares a fallback
+- **THEN** `error` fires naming `H`, the player enters fallback mode, and its status names the failed stem
 
 #### Scenario: Invalid manifest
 - **WHEN** `src` points to a manifest with a dangling transition
-- **THEN** the player shows the validation message and its JSON Pointer, and play stays disabled
+- **THEN** the player shows the validation message and its JSON Pointer, and play stays disabled, whether or not it declares a fallback
 
 ### Requirement: Playback
 Play SHALL start the performance from the current position, and pause SHALL stop it while keeping the position. Seeking SHALL move the position to the start of any bar, or to any point on the scrub bar, and playback SHALL continue from exactly that frame of the render. Pausing, resuming and seeking SHALL fade the output over 10 ms to avoid clicks. These fades happen after the worklet output and are outside the sample-identity promise. When the render ends, after the last tail, playback SHALL stop, the position SHALL rest at the end, and an `ended` event SHALL fire. Pressing play at the end SHALL restart from the beginning.
@@ -97,3 +101,55 @@ The player SHALL draw the performance as lanes: a band showing each section visi
 #### Scenario: Click to seek
 - **WHEN** the view is clicked at the horizontal position of bar 5
 - **THEN** the position moves to bar 5 (within one frame of the click's time) and the playhead is drawn there
+
+### Requirement: When the player falls back
+For a valid manifest that declares a fallback, the player SHALL enter fallback mode instead of the generative performance in any of these cases: the `fallback` attribute is present; the browser lacks `AudioWorkletNode`, `crypto.subtle` or a secure context; a needed stem fails to load; or the audio worklet fails to start on first play. A manifest without a fallback SHALL never enter fallback mode.
+
+#### Scenario: Forced by attribute
+- **WHEN** a player with `fallback` loads a manifest that declares a fallback
+- **THEN** it enters fallback mode without fetching any `.wav` stem
+
+#### Scenario: No AudioWorklet
+- **WHEN** the player loads a manifest with a fallback in a page where `AudioWorkletNode` is undefined
+- **THEN** it enters fallback mode without fetching any `.wav` stem
+
+#### Scenario: Worklet fails at play
+- **WHEN** stems load, play is pressed, and loading the audio worklet module rejects
+- **THEN** the player enters fallback mode and starts playing the fallback
+
+#### Scenario: Forced without a fallback
+- **WHEN** a player with `fallback` loads a manifest that declares no fallback
+- **THEN** it shows an error saying the piece has no fallback recording, and play stays disabled
+
+### Requirement: Fallback mode playback
+In fallback mode the player SHALL play the fallback file from `<stems><hex>.mp3` with the browser's own media playback, with working play, pause and scrub controls and the elapsed and total time. It SHALL show the fallback's seed, disable the seed, reroll and length controls, hide the structure view, and say that this is a fixed recording of that seed and why the generative version isn't playing.
+
+#### Scenario: Fallback controls
+- **WHEN** the player is in fallback mode for a fallback with seed `spite-store` and 64 bars
+- **THEN** the seed field shows `spite-store` and is disabled, reroll and length are disabled, the lanes are hidden, and the status says it is a fixed recording of seed `spite-store`
+
+#### Scenario: Copy link in fallback mode
+- **WHEN** copy link is pressed in fallback mode on `https://example.test/p` for a fallback with seed `spite-store` and 64 bars
+- **THEN** the clipboard holds `https://example.test/p?seed=spite-store&bars=64`
+
+#### Scenario: Ending in fallback mode
+- **WHEN** the fallback recording plays to its end
+- **THEN** the `ended` event fires once and the play button returns to "play"
+
+### Requirement: Fallback file verification
+Before playing it, the player SHALL fetch the fallback file and verify its sha256 against the manifest's hash when `crypto.subtle` is available. A mismatch or failed fetch SHALL be an error naming the fallback hash, with play disabled. Without `crypto.subtle`, it SHALL play the file unverified.
+
+#### Scenario: Corrupt fallback
+- **WHEN** the server returns bytes for the fallback that do not hash to its hash
+- **THEN** the player shows an error naming the fallback hash, and play stays disabled
+
+#### Scenario: Missing fallback
+- **WHEN** the fallback file returns 404
+- **THEN** the player shows an error naming the fallback hash, and play stays disabled
+
+### Requirement: Fallback event
+On entering fallback mode, the player SHALL fire a `fallback` event whose detail carries `{ reason, seed, bars }`, where `reason` is one of `forced`, `unsupported`, `stems` or `worklet`. It SHALL then fire `ready` once the fallback file is playable.
+
+#### Scenario: Reason reported
+- **WHEN** the player falls back because a stem failed its hash
+- **THEN** a `fallback` event fires with `reason` `stems` and the fallback's seed and bars, followed by `ready`
