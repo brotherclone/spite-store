@@ -12,6 +12,7 @@ export {
   FALLBACK_TYPES,
   type Breakpoint,
   type Clip,
+  type EngineFormats,
   type Fallback,
   type Manifest,
   type ManifestError,
@@ -51,3 +52,4 @@ export {
 } from './audio/render.js';
 export { synthesizeClip, synthesizeStemWav, type ClipRecipe } from './audio/synth.js';
 export { realizeTimeline, type Visit } from './timeline.js';
+export { ENGINE_FORMATS, checkPin, describePinMismatch, type PinMismatch } from './pin.js';

@@ -30,18 +30,18 @@ Changing any attribute stops playback and loads the new performance.
 
 ## Events, properties and methods
 
-|                                                      |                                                                                                                                                                        |
-| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ready`                                              | The performance is loaded and playable.                                                                                                                                |
-| `seedchange`                                         | The seed or length changed from the UI or a random choice. `detail: { seed, bars }`. Hosts use it to keep their URL in sync.                                           |
-| `ended`                                              | Playback reached the end of the render (after the last tail).                                                                                                          |
-| `error`                                              | Loading failed. `detail: { messages }`: validation messages, or each failing stem's clip ids and hash.                                                                 |
-| `fallback`                                           | Switched to the fixed recording. `detail: { reason, seed, bars }`, with `reason` one of `forced`, `unsupported`, `stems`, `worklet`. `ready` follows once it can play. |
-| `fallbackReason`                                     | Why the fixed recording is playing, or `null` for the generative performance.                                                                                          |
-| `play()`, `pause()`, `seek(frame)`, `seekToBar(bar)` | Playback control.                                                                                                                                                      |
-| `performance`                                        | The loaded trace, section visits and render plan.                                                                                                                      |
-| `position`, `isPlaying`                              | Current frame (48 kHz) and state.                                                                                                                                      |
-| `link()`                                             | The page URL with `seed` and `bars` set; the copy-link button copies it.                                                                                               |
+|                                                      |                                                                                                                                                                                  |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ready`                                              | The performance is loaded and playable.                                                                                                                                          |
+| `seedchange`                                         | The seed or length changed from the UI or a random choice. `detail: { seed, bars }`. Hosts use it to keep their URL in sync.                                                     |
+| `ended`                                              | Playback reached the end of the render (after the last tail).                                                                                                                    |
+| `error`                                              | Loading failed. `detail: { messages }`: validation messages, or each failing stem's clip ids and hash.                                                                           |
+| `fallback`                                           | Switched to the fixed recording. `detail: { reason, seed, bars }`, with `reason` one of `forced`, `engine`, `unsupported`, `stems`, `worklet`. `ready` follows once it can play. |
+| `fallbackReason`                                     | Why the fixed recording is playing, or `null` for the generative performance.                                                                                                    |
+| `play()`, `pause()`, `seek(frame)`, `seekToBar(bar)` | Playback control.                                                                                                                                                                |
+| `performance`                                        | The loaded trace, section visits and render plan.                                                                                                                                |
+| `position`, `isPlaying`                              | Current frame (48 kHz) and state.                                                                                                                                                |
+| `link()`                                             | The page URL with `seed` and `bars` set; the copy-link button copies it.                                                                                                         |
 
 ## Styling
 
@@ -66,6 +66,7 @@ A manifest may declare a `fallback`: one fixed recording of the piece, rendered 
 | `reason`      | When                                                                                                         |
 | ------------- | ------------------------------------------------------------------------------------------------------------ |
 | `forced`      | The `fallback` attribute is present.                                                                         |
+| `engine`      | The manifest is pinned to engine formats other than the player's (see below). No stem is fetched.            |
 | `unsupported` | The page has no `AudioWorkletNode`, isn't a secure context, or has no `crypto.subtle`.                       |
 | `stems`       | A stem the performance needs is missing, fails its hash or can't be decoded. `error` fires first, naming it. |
 | `worklet`     | The audio worklet fails to start on the first play. The recording then starts playing.                       |
@@ -77,6 +78,17 @@ recording's seed, and seed, reroll and length are disabled. The lanes are hidden
 them needs the stems. `link()` and copy link give the recording's seed and length, so the link
 opens the generative version of the same seed in a browser that can play it. A piece without a
 `fallback` never falls back. An invalid manifest is an error either way.
+
+### Engine pin
+
+A released manifest records the engine formats it was made with, `"engine": { "trace": 1, "render": 1 }`
+(written by `spite pin --update`). A seed link means "this manifest, played by this engine", so when
+the pin doesn't match the engine bundled in the player, the player never plays the piece
+generatively. With a `fallback` it plays the recording, with reason `engine`, and the status says
+whether the piece was made with an earlier or a later version of the player, naming each differing
+format. Without a `fallback` it shows those lines as an error, fires `error`, and play stays
+disabled. Either way, no stem is fetched. The `fallback` attribute still wins, with reason `forced`. A
+manifest without `engine` plays on whatever engine the player has.
 
 The fixed recording is outside the sample-identity promise below: it was encoded to MP3 and is
 decoded by the browser.

@@ -299,3 +299,59 @@ describe('fallback file verification', () => {
     expect(part(el, 'lanes').hidden).toBe(false);
   });
 });
+
+describe('a manifest pinned to other engine formats', () => {
+  /** Trace 99 is newer than any engine the player bundles. */
+  const NEWER = { trace: 99, render: 1 };
+
+  it('plays the fallback without fetching any stem, saying a later player made it', async () => {
+    const srv = server({ manifest: { ...withFallback, engine: NEWER } });
+    const el = player({ src: MANIFEST, seed: '42', bars: '16' }, srv);
+    const seen = record(el, 'fallback', 'ready', 'error');
+    await once(el, 'ready');
+    expect(seen.map((e) => e.type)).toEqual(['fallback', 'ready']);
+    expect(seen[0]!.detail).toEqual({ reason: 'engine', seed: 'spite-store', bars: 16 });
+    expect(el.fallbackReason).toBe('engine');
+    expect(srv.wavRequests).toEqual([]);
+    const status = part(el, 'status').textContent!;
+    expect(status).toContain('a later version of the player');
+    expect(status).toContain('trace format 99');
+    expect(part<HTMLButtonElement>(el, 'play').disabled).toBe(false);
+  });
+
+  it('without a fallback shows an error naming both formats and stays disabled', async () => {
+    const noFallback: Manifest = { ...withFallback, engine: NEWER };
+    delete noFallback.fallback;
+    const srv = server({ manifest: noFallback });
+    const el = player({ src: MANIFEST, seed: '42', bars: '16' }, srv);
+    const seen = record(el, 'fallback', 'ready', 'error');
+    const error = await once(el, 'error');
+    expect(seen.map((e) => e.type)).toEqual(['error']);
+    expect(error.detail.messages.join('\n')).toMatch(/trace format 99, this engine has \d+/);
+    expect(part(el, 'status').textContent).toContain('trace format 99');
+    expect(part(el, 'status').classList.contains('error')).toBe(true);
+    expect(part<HTMLButtonElement>(el, 'play').disabled).toBe(true);
+    expect(srv.wavRequests).toEqual([]);
+    expect(srv.mp3Requests).toEqual([]);
+  });
+
+  it('gives way to the fallback attribute', async () => {
+    const srv = server({ manifest: { ...withFallback, engine: NEWER } });
+    const el = player({ src: MANIFEST, seed: '42', bars: '16', fallback: '' }, srv);
+    const fallback = once(el, 'fallback');
+    await once(el, 'ready');
+    expect((await fallback).detail.reason).toBe('forced');
+  });
+
+  it('plays an unpinned manifest generatively', async () => {
+    const unpinned: Manifest = { ...withFallback };
+    delete unpinned.engine;
+    const srv = server({ manifest: unpinned });
+    const el = player({ src: MANIFEST, seed: '42', bars: '16' }, srv);
+    const seen = record(el, 'fallback', 'ready', 'error');
+    await once(el, 'ready');
+    expect(seen.map((e) => e.type)).toEqual(['ready']);
+    expect(el.fallbackReason).toBeNull();
+    expect(srv.wavRequests.length).toBeGreaterThan(0);
+  });
+});

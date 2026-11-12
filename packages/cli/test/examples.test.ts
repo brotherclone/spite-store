@@ -110,3 +110,23 @@ describe('fallback messages', () => {
     expect(message).not.toMatch(/\^|\[0-9a-f\]|must match pattern/);
   });
 });
+
+describe('engine pin messages', () => {
+  const base = read('valid', 'engine-pin.json') as { engine: Record<string, unknown> };
+  const errorsFor = (engine: unknown) => validateManifest({ ...base, engine });
+
+  it.each([
+    ['zero trace', { trace: 0, render: 1 }, '/engine/trace', 'at least 1'],
+    ['string render', { trace: 1, render: '1' }, '/engine/render', 'integer'],
+    ['missing render', { trace: 1 }, '/engine', '"render"'],
+    ['unknown field', { trace: 1, render: 1, version: '1.0' }, '/engine', '"version"'],
+  ])('reports a %s in plain language', (_, engine, pointer, needle) => {
+    const errors = errorsFor(engine);
+    expect(errors.map((e) => e.pointer)).toContain(pointer);
+    expect(errors.find((e) => e.pointer === pointer)!.message).toContain(needle);
+  });
+
+  it('accepts a pin to formats this engine does not have', () => {
+    expect(errorsFor({ trace: 7, render: 3 })).toEqual([]);
+  });
+});

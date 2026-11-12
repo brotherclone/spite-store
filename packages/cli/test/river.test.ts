@@ -22,6 +22,11 @@ describe('The River Forgets to Answer', () => {
     expect(manifest.tempo).toEqual([{ bar: 0, bpm: 63, meter: [7, 8] }]);
   });
 
+  it('is pinned to the formats it was released with', () => {
+    // Literal on purpose: a format bump must not re-pin the River (its links would change).
+    expect(manifest.engine).toEqual({ trace: 1, render: 1 });
+  });
+
   it('packs every clip from a 5-bar range at bar 0, 5 or 10', () => {
     expect(Object.keys(pack.clips).sort()).toEqual(Object.keys(manifest.clips).sort());
     for (const [id, entry] of Object.entries(pack.clips) as [string, Record<string, unknown>][]) {
