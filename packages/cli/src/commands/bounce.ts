@@ -1,7 +1,14 @@
 import { writeFileSync } from 'node:fs';
 import { SAMPLE_RATE } from '@spite-store/engine';
 import { parse } from '../args.js';
-import { EXIT_OK, EXIT_USAGE, UsageError, loadManifest, positiveInt } from '../common.js';
+import {
+  EXIT_OK,
+  EXIT_USAGE,
+  UsageError,
+  checkPinOrExit,
+  loadManifest,
+  positiveInt,
+} from '../common.js';
 import { renderSeedWav } from '../render.js';
 import { DEFAULT_STEMS_DIR, reportStemProblems } from '../stems.js';
 
@@ -11,6 +18,7 @@ export function bounceCommand(argv: string[]): number {
     bars: { type: 'string' },
     out: { type: 'string', short: 'o' },
     stems: { type: 'string' },
+    'ignore-pin': { type: 'boolean' },
   });
   if (positionals.length !== 1) throw new UsageError('bounce takes exactly one manifest');
   if (values.seed === undefined) throw new UsageError('bounce needs --seed');
@@ -18,6 +26,10 @@ export function bounceCommand(argv: string[]): number {
   const bars = positiveInt('bars', values.bars, 64);
   const loaded = loadManifest(positionals[0]!);
   if (!('manifest' in loaded)) return loaded.exit;
+  const refused = checkPinOrExit(positionals[0]!, loaded.manifest, {
+    ignore: values['ignore-pin'],
+  });
+  if (refused !== null) return refused;
 
   const rendered = renderSeedWav(
     loaded.manifest,

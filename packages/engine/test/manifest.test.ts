@@ -148,3 +148,29 @@ describe('checkManifest: fallback', () => {
     expect(withFallback({ ...fallback, url: 'x' })[0]!.message).toContain('"url"');
   });
 });
+
+describe('checkManifest: engine', () => {
+  const withEngine = (e: unknown) => checkManifest({ ...base(), engine: e });
+
+  it('accepts a pin to the current formats', () => {
+    expect(withEngine({ trace: 1, render: 1 })).toEqual([]);
+  });
+
+  it('accepts a pin to formats this engine does not have', () => {
+    expect(withEngine({ trace: 7, render: 3 })).toEqual([]);
+  });
+
+  it.each([
+    ['a zero trace', { trace: 0, render: 1 }, '/engine/trace'],
+    ['a string render', { trace: 1, render: '1' }, '/engine/render'],
+    ['a missing render', { trace: 1 }, '/engine/render'],
+    ['an unknown field', { trace: 1, render: 1, version: '1.0' }, '/engine'],
+    ['a non-object', 1, '/engine'],
+  ])('rejects %s', (_, e, expected) => {
+    expect(withEngine(e).map((x) => x.pointer)).toEqual([expected]);
+  });
+
+  it('names the unknown field', () => {
+    expect(withEngine({ trace: 1, render: 1, version: 'x' })[0]!.message).toContain('"version"');
+  });
+});

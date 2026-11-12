@@ -9,3 +9,8 @@ are checked in CI even though the river piece's audio is not in the repo.
 The test suite never writes these. Regenerate them on purpose with `pnpm golden:update`, and only
 alongside a `traceFormat` bump or a change you intend to alter existing seeds, such as retuning a
 piece's manifest.
+
+Bumping `traceFormat` (or the audio snapshots' `renderFormat`) strands every committed piece pinned
+to the old formats: players refuse to play it generatively and play its fallback recording. Leave
+those pins alone unless the piece is being re-released on purpose (see `pieces/README.md`). The
+deploy build lists stranded pieces as warnings.

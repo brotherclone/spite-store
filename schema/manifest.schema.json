@@ -37,7 +37,8 @@
       "minItems": 2,
       "items": { "$ref": "#/$defs/breakpoint" }
     },
-    "fallback": { "$ref": "#/$defs/fallback" }
+    "fallback": { "$ref": "#/$defs/fallback" },
+    "engine": { "$ref": "#/$defs/engine" }
   },
   "$defs": {
     "id": {
@@ -139,6 +140,24 @@
       "properties": {
         "to": { "$ref": "#/$defs/id" },
         "weight": { "type": "number", "minimum": 0 }
+      }
+    },
+    "engine": {
+      "description": "The engine formats the piece was released with. Players refuse to play it generatively on other formats. Ignored by realization.",
+      "type": "object",
+      "required": ["trace", "render"],
+      "additionalProperties": false,
+      "properties": {
+        "trace": {
+          "description": "The engine trace format (TRACE_FORMAT).",
+          "type": "integer",
+          "minimum": 1
+        },
+        "render": {
+          "description": "The engine render format (RENDER_FORMAT).",
+          "type": "integer",
+          "minimum": 1
+        }
       }
     },
     "fallback": {

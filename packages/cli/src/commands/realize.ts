@@ -1,6 +1,6 @@
 import { canonicalTrace, realize } from '@spite-store/engine';
 import { parse } from '../args.js';
-import { EXIT_OK, UsageError, loadManifest, positiveInt } from '../common.js';
+import { EXIT_OK, UsageError, checkPinOrExit, loadManifest, positiveInt } from '../common.js';
 import { clipNames, realizeByBar } from './sections.js';
 
 export function realizeCommand(argv: string[]): number {
@@ -8,6 +8,7 @@ export function realizeCommand(argv: string[]): number {
     seed: { type: 'string' },
     bars: { type: 'string' },
     json: { type: 'boolean' },
+    'ignore-pin': { type: 'boolean' },
   });
   if (positionals.length !== 1) throw new UsageError('realize takes exactly one manifest');
   if (values.seed === undefined) throw new UsageError('realize needs --seed');
@@ -16,6 +17,8 @@ export function realizeCommand(argv: string[]): number {
   const loaded = loadManifest(file);
   if (!('manifest' in loaded)) return loaded.exit;
   const { manifest } = loaded;
+  const refused = checkPinOrExit(file, manifest, { ignore: values['ignore-pin'] });
+  if (refused !== null) return refused;
 
   if (values.json) {
     console.log(canonicalTrace(realize(manifest, values.seed, { durationBars: bars })));

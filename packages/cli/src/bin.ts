@@ -4,6 +4,7 @@ import { auditionCommand } from './commands/audition.js';
 import { bounceCommand } from './commands/bounce.js';
 import { fallbackCommand } from './commands/fallback.js';
 import { packCommand } from './commands/pack.js';
+import { pinCommand } from './commands/pin.js';
 import { publishCommand } from './commands/publish.js';
 import { realizeCommand } from './commands/realize.js';
 import { validateCommand } from './commands/validate.js';
@@ -25,6 +26,8 @@ function main(argv: string[]): number | Promise<number> {
       return fallbackCommand(rest);
     case 'publish':
       return publishCommand(rest);
+    case 'pin':
+      return pinCommand(rest);
     case '-h':
     case '--help':
     case 'help':

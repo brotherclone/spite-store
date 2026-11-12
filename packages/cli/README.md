@@ -52,6 +52,18 @@ the render actually uses are needed; every missing or invalid one is listed and 
 For the placeholder piece, `pnpm stems:placeholder` synthesizes the stems into `.stems/`. For a
 recorded piece, `spite pack` cuts them from the recordings (below).
 
+## Engine pin
+
+A released manifest records the engine formats it was made with: `"engine": { "trace": 1, "render": 1 }`,
+the engine's `TRACE_FORMAT` and `RENDER_FORMAT`. A seed link means "this manifest, played by this
+engine", so `realize`, `bounce` and `audition` refuse a manifest pinned to other formats: they
+print each differing format with its pinned and current number and exit 1, before reading any stem.
+`--ignore-pin` plays the current engine's version anyway, after a warning. It is for an author
+hearing what a format change did, before deciding whether to re-pin. `spite fallback` has no such
+flag, because a fallback must be a recording of the pinned performance. An unpinned manifest plays
+on whatever engine runs it. `spite pin` (below) writes the pin, and the deploy check refuses to
+deploy an unpinned piece.
+
 ## `spite realize <manifest> --seed <seed> [--bars 64] [--json]`
 
 Prints the trace. The readable form names clips by id and marks each new section visit:
@@ -147,7 +159,7 @@ silently replacing a published recording. Only the render is part of the determi
 | Exit code | Meaning                                                                 |
 | --------- | ----------------------------------------------------------------------- |
 | 0         | File written, and the manifest's fallback matches (or was updated)      |
-| 1         | Invalid manifest, or the fallback differs (without `--update`)          |
+| 1         | Invalid manifest, a mismatched pin, or the fallback differs             |
 | 2         | Usage error, a missing or invalid stem, or no `ffmpeg` with MP3 support |
 
 ```sh
@@ -183,3 +195,25 @@ Uploads nothing and needs no token: sends `HEAD <base-url><hex>.<ext>` for every
 | 0         | Every file uploaded or already present (`--check`: every file reachable)    |
 | 1         | Invalid manifest, a failed upload, or (`--check`) an unreachable file       |
 | 2         | Usage error, a missing or corrupt local file, or no `BLOB_READ_WRITE_TOKEN` |
+
+## `spite pin <manifest> [--update]`
+
+Reports the manifest's engine pin against this engine: pinned to the current formats, not pinned,
+or pinned to other formats (each differing number, and whether the piece was made with an older or
+a newer engine). Without `--update` it never changes the file.
+
+With `--update` it sets `engine` to this engine's formats, directly after `specVersion`, and
+leaves every other field alone. A manifest already pinned to the current formats isn't rewritten.
+Replacing a different pin is a re-release: every existing seed link to the piece will play a
+different performance from the one it was shared as, and the command warns about that. Do it only
+on purpose. A stranded piece otherwise keeps playing its fallback recording on the site.
+
+| Exit code | Meaning                                                 |
+| --------- | ------------------------------------------------------- |
+| 0         | Pinned to the current formats (or pinned by `--update`) |
+| 1         | Invalid manifest, unpinned, or pinned to other formats  |
+| 2         | Usage error or unreadable file                          |
+
+```sh
+pnpm exec spite pin pieces/the-river-forgets-to-answer/manifest.json
+```

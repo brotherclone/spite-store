@@ -1,5 +1,6 @@
 import { execFile } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { join } from 'node:path';
@@ -61,12 +62,12 @@ describe('scripts/deploy-check.mjs', () => {
   });
   afterAll(() => new Promise<void>((resolve) => server.close(() => resolve())));
 
-  const run = () =>
+  const run = (env: Record<string, string> = {}) =>
     new Promise<{ code: number; out: string }>((resolve) =>
       execFile(
         process.execPath,
         [join(repo, 'scripts/deploy-check.mjs')],
-        { cwd: repo, env: { ...process.env, SPITE_STEMS_BASE: base } },
+        { cwd: repo, env: { ...process.env, SPITE_STEMS_BASE: base, ...env } },
         (error, stdout, stderr) =>
           resolve({ code: error ? (error.code as number) : 0, out: stdout + stderr }),
       ),
@@ -92,5 +93,69 @@ describe('scripts/deploy-check.mjs', () => {
     const r = await run();
     expect(r.code).toBe(1);
     expect(r.out).toContain(hash);
+  });
+
+  describe('engine pins', () => {
+    const placeholder = JSON.parse(
+      readFileSync(join(repo, 'pieces/placeholder/manifest.json'), 'utf8'),
+    );
+    const fallback = {
+      hash: (Object.values(placeholder.clips)[0] as { hash: string }).hash,
+      type: 'audio/mpeg',
+      seed: 'spite-store',
+      bars: 16,
+    };
+    /** A temporary pieces directory holding one copy of the placeholder per given variant. */
+    function pieces(variants: Record<string, { engine?: unknown; fallback?: unknown }>): string {
+      const dir = mkdtempSync(join(tmpdir(), 'spite-pieces-'));
+      for (const [id, v] of Object.entries(variants)) {
+        const m = { ...placeholder, id };
+        delete m.engine;
+        delete m.fallback;
+        if (v.engine !== undefined) m.engine = v.engine;
+        if (v.fallback !== undefined) m.fallback = v.fallback;
+        mkdirSync(join(dir, id));
+        writeFileSync(join(dir, id, 'manifest.json'), JSON.stringify(m));
+      }
+      return dir;
+    }
+
+    it('fails on an unpinned piece, naming it', async () => {
+      missing = null;
+      const r = await run({
+        SPITE_PIECES_DIR: pieces({ pinned: { engine: { trace: 1, render: 1 } }, loose: {} }),
+      });
+      expect(r.code).toBe(1);
+      expect(r.out).toMatch(/loose\/manifest\.json {2}not pinned/);
+      expect(r.out).not.toMatch(/pinned\/manifest\.json {2}not pinned/);
+    });
+
+    it('warns, but passes, for a stranded piece with a fallback', async () => {
+      missing = null;
+      const r = await run({
+        SPITE_PIECES_DIR: pieces({ stranded: { engine: { trace: 99, render: 1 }, fallback } }),
+      });
+      expect(r.code, r.out).toBe(0);
+      expect(r.out).toMatch(
+        /warning: .*stranded\/manifest\.json {2}trace format 99, this engine has 1/,
+      );
+      expect(r.out).toContain('will play its fallback recording');
+    });
+
+    it('warns, but passes, for a stranded piece without a fallback', async () => {
+      missing = null;
+      const r = await run({
+        SPITE_PIECES_DIR: pieces({ stranded: { engine: { trace: 99, render: 1 } } }),
+      });
+      expect(r.code, r.out).toBe(0);
+      expect(r.out).toContain('will not play');
+    });
+
+    it('passes with no pin warning when every piece is pinned to the current formats', async () => {
+      missing = null;
+      const r = await run({ SPITE_PIECES_DIR: pieces({ a: { engine: { trace: 1, render: 1 } } }) });
+      expect(r.code, r.out).toBe(0);
+      expect(r.out).not.toContain('warning');
+    });
   });
 });
