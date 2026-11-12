@@ -18,7 +18,7 @@ Commands that render audio SHALL look up each clip's stem by hash in a stems dir
 - **THEN** stems are read from `.stems/` and the command exits 0
 
 ### Requirement: Manifest input checks
-`spite realize`, `spite bounce` and `spite audition` SHALL validate the manifest the same way `spite validate` does before doing anything else. They SHALL print validation errors in the same format and exit 1 on an invalid manifest, and exit 2 on usage errors or an unreadable or unparseable file.
+`spite realize`, `spite bounce` and `spite audition` SHALL validate the manifest the same way `spite validate` does before doing anything else. They SHALL print validation errors in the same format and exit 1 on an invalid manifest, and exit 2 on usage errors or an unreadable or unparseable file. They SHALL then check the manifest's engine pin, and without `--ignore-pin` exit 1 on a mismatch, naming each differing format with its pinned and current values, and writing and playing nothing.
 
 #### Scenario: Invalid manifest
 - **WHEN** `spite bounce` is run on a manifest with a dangling transition
@@ -27,6 +27,14 @@ Commands that render audio SHALL look up each clip's stem by hash in a stems dir
 #### Scenario: Bad arguments
 - **WHEN** `spite bounce` is run without `--seed`, with `--bars 0`, or with an unknown flag
 - **THEN** it prints usage and exits 2
+
+#### Scenario: Mismatched pin
+- **WHEN** `spite realize`, `spite bounce` or `spite audition` is run without `--ignore-pin` on a manifest pinned to trace 2 while the engine's trace format is 1
+- **THEN** it prints the trace format pinned (2) and current (1) and mentions `--ignore-pin`, writes no output, plays nothing, and exits 1
+
+#### Scenario: Unpinned manifest
+- **WHEN** `spite bounce` is run on the placeholder manifest with its `engine` field removed
+- **THEN** it renders as before, prints no pin warning, and exits 0
 
 ### Requirement: Realize command
 `spite realize <manifest> --seed <seed> [--bars <n>] [--json]` SHALL print the trace of the manifest for that seed, with `--bars` defaulting to 64. Seeds given on the command line are strings, so `--seed 42` is the seed `"42"` (identical to `42`). By default the output SHALL be human-readable: a header with the seed, the bar count, the event count and the bar at which the piece ended (if it ended early), then one line per bar that has events, showing the bar, the section, and each event's slot and clip id. A new section visit SHALL be marked on the line of its first bar. With `--json` it SHALL print exactly the canonical trace JSON used for golden trace hashes.

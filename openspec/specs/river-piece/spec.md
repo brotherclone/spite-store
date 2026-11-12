@@ -7,7 +7,7 @@ Defines the first real piece, *The River Forgets to Answer*: a string quartet wh
 ## Requirements
 
 ### Requirement: Piece files
-The repository SHALL contain the piece at `pieces/the-river-forgets-to-answer/` with a valid manifest (`manifest.json`, id `the-river-forgets-to-answer`), a pack file (`pack.json`), and a README. The manifest SHALL declare a fallback rendered from seed `spite-store` for 64 bars. The README SHALL say where the source recordings come from, how to pack them, how to regenerate and publish the fallback, and that the recordings are cleared for publishing. No audio SHALL be committed.
+The repository SHALL contain the piece at `pieces/the-river-forgets-to-answer/` with a valid manifest (`manifest.json`, id `the-river-forgets-to-answer`), a pack file (`pack.json`), and a README. The manifest SHALL declare a fallback rendered from seed `spite-store` for 64 bars, and SHALL be pinned to the engine formats it was released with, trace 1 and render 1. The README SHALL say where the source recordings come from, how to pack them, how to regenerate and publish the fallback, and that the recordings are cleared for publishing. No audio SHALL be committed.
 
 #### Scenario: Manifest is valid
 - **WHEN** `spite validate pieces/the-river-forgets-to-answer/manifest.json` is run
@@ -20,6 +20,10 @@ The repository SHALL contain the piece at `pieces/the-river-forgets-to-answer/` 
 #### Scenario: Fallback declared
 - **WHEN** the manifest is inspected
 - **THEN** its `fallback` has `type` `audio/mpeg`, `seed` `spite-store` and `bars` 64
+
+#### Scenario: Pinned to its release formats
+- **WHEN** the manifest is inspected
+- **THEN** its `engine` is `{ "trace": 1, "render": 1 }`, and stays so when the engine's formats change
 
 ### Requirement: Timing and material
 The manifest SHALL have a single tempo entry of 63 BPM in 7/8. It SHALL have eight slots, one per instrument and mic among violin 1, violin 2, viola and cello, each with a close and a room mic. Each slot's pool SHALL hold that instrument and mic's three phrase variations as 4-bar clips. Each clip SHALL be packed from a 5-bar range starting at bar 0, 5 or 10 of its source, so the bar after the phrase is its tail.
