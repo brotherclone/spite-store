@@ -27,7 +27,7 @@
 ## 5. Release
 
 - [x] 5.1 Run the full suite: `pnpm test`, `pnpm test:browser`, `pnpm lint`, `pnpm typecheck` and `pnpm format:check`, all passing, with `git diff fixtures/golden` empty.
-- [ ] 5.2 Push a feature branch and verify on its preview: the build log shows the pin check passing with no warnings, the River plays generatively, and `vercel curl` on `/pieces/the-river-forgets-to-answer/manifest.json` shows `"engine": { "trace": 1, "render": 1 }`. Then merge into `develop` and `master`, and confirm the production manifest carries the pin.
+- [x] 5.2 Push a feature branch and verify on its preview: the build log shows the pin check passing with no warnings, the River plays generatively, and `vercel curl` on `/pieces/the-river-forgets-to-answer/manifest.json` shows `"engine": { "trace": 1, "render": 1 }`. Then merge into `develop` and `master`, and confirm the production manifest carries the pin.
 
 ## Workflow follow-up
 
