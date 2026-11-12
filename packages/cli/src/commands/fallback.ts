@@ -7,6 +7,7 @@ import {
   EXIT_OK,
   EXIT_USAGE,
   UsageError,
+  checkPinOrExit,
   loadManifest,
   positiveInt,
   rewriteJson,
@@ -33,6 +34,9 @@ export async function fallbackCommand(argv: string[]): Promise<number> {
   const loaded = loadManifest(manifestFile);
   if (!('manifest' in loaded)) return loaded.exit;
   const { manifest } = loaded;
+  // A fallback is a recording of the pinned performance, so there is no --ignore-pin here.
+  const refused = checkPinOrExit(manifestFile, manifest, { ignorable: false });
+  if (refused !== null) return refused;
 
   const encoderProblem = checkMp3Encoder();
   if (encoderProblem) {

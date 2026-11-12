@@ -57,6 +57,14 @@ export interface Manifest {
   envelope?: Breakpoint[];
   /** One fixed recording of the piece. Realization and rendering never read it. */
   fallback?: Fallback;
+  /** The engine formats the piece was released with. Realization and rendering never read it. */
+  engine?: EngineFormats;
+}
+
+/** The engine formats that decide what a seed sounds like: TRACE_FORMAT and RENDER_FORMAT. */
+export interface EngineFormats {
+  trace: number;
+  render: number;
 }
 
 /** A fixed recording of one performance, for players that can't play the piece generatively. */
@@ -70,6 +78,7 @@ export interface Fallback {
 
 export const FALLBACK_TYPES = ['audio/mpeg'] as const;
 const FALLBACK_KEYS = ['bars', 'hash', 'seed', 'type'];
+const ENGINE_KEYS = ['render', 'trace'];
 
 /** A validation error: a JSON Pointer (RFC 6901) into the manifest and a message. */
 export interface ManifestError {
@@ -241,6 +250,19 @@ function checkStructure(m: Json): ManifestError[] {
       if (typeof f.seed !== 'string' || f.seed.length === 0)
         fail('seed must be a non-empty string', 'fallback', 'seed');
       if (!isInt(f.bars, 1)) fail('bars must be a positive integer', 'fallback', 'bars');
+    }
+  }
+  if (m.engine !== undefined) {
+    const e = m.engine;
+    if (!isObject(e)) {
+      fail('engine must be an object', 'engine');
+    } else {
+      for (const key of Object.keys(e).sort()) {
+        if (!ENGINE_KEYS.includes(key)) fail(`unknown engine property "${key}"`, 'engine');
+      }
+      for (const key of ENGINE_KEYS) {
+        if (!isInt(e[key], 1)) fail(`${key} must be a positive integer`, 'engine', key);
+      }
     }
   }
   return errors;

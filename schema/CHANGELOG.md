@@ -25,3 +25,12 @@ Initial draft.
   use it when they can't play the piece generatively. Realization and rendering ignore it.
 - `specVersion` stays `0.1`: every existing manifest validates and realizes exactly as before. A
   manifest that uses `fallback` does not validate with a validator from before this addition.
+
+### 0.1 addition: `engine`
+
+- Optional top-level `engine`: `{ trace, render }`, both integers of at least 1, the engine's
+  `TRACE_FORMAT` and `RENDER_FORMAT` that the piece was released with. Players and the CLI refuse to
+  realize a pinned manifest on other formats (players play its `fallback` instead). Validation
+  doesn't compare the pin with any engine, and realization and rendering ignore it.
+- `specVersion` stays `0.1`: every existing manifest validates and realizes exactly as before. A
+  manifest that uses `engine` does not validate with a validator from before this addition.

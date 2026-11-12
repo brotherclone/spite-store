@@ -11,7 +11,14 @@ import {
   type RenderPlan,
 } from '@spite-store/engine';
 import { parse } from '../args.js';
-import { EXIT_OK, EXIT_USAGE, UsageError, loadManifest, positiveInt } from '../common.js';
+import {
+  EXIT_OK,
+  EXIT_USAGE,
+  UsageError,
+  checkPinOrExit,
+  loadManifest,
+  positiveInt,
+} from '../common.js';
 import { DEFAULT_STEMS_DIR, loadStems, reportStemProblems } from '../stems.js';
 import { realizeByBar, sectionSummary } from './sections.js';
 
@@ -43,6 +50,7 @@ export async function auditionCommand(argv: string[]): Promise<number> {
     stems: { type: 'string' },
     out: { type: 'string', short: 'o' },
     'no-play': { type: 'boolean' },
+    'ignore-pin': { type: 'boolean' },
   });
   if (positionals.length !== 1) throw new UsageError('audition takes exactly one manifest');
   if (values.seed !== undefined && values.seeds !== undefined) {
@@ -55,6 +63,8 @@ export async function auditionCommand(argv: string[]): Promise<number> {
   const loaded = loadManifest(positionals[0]!);
   if (!('manifest' in loaded)) return loaded.exit;
   const { manifest } = loaded;
+  const refused = checkPinOrExit(positionals[0]!, manifest, { ignore: values['ignore-pin'] });
+  if (refused !== null) return refused;
 
   const takes = seeds.map((seed) => ({ seed, ...realizeByBar(manifest, seed, bars) }));
   const { stems, problems } = loadStems(

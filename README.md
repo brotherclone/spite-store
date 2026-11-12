@@ -75,6 +75,7 @@ vercel env pull .env.local     # once: writes BLOB_READ_WRITE_TOKEN (git-ignored
 pnpm build
 pnpm stems:placeholder         # and spite pack for each recorded piece
 pnpm exec spite fallback pieces/<id>/manifest.json --seed <seed> --update   # needs ffmpeg
+pnpm exec spite pin pieces/<id>/manifest.json --update                     # once, on first release
 node --env-file=.env.local packages/cli/bin/spite.js publish pieces/*/manifest.json
 ```
 
@@ -83,7 +84,9 @@ on the piece named in `site/.env.production`. `spite publish` uploads only what 
 never replaces a file. Commit the manifest
 change and push: every branch gets a preview deployment, and `master` is production. The build
 runs `spite publish --check`, so it fails rather than deploy a manifest whose stems aren't in the
-store. See `packages/cli/README.md` for `fallback` and `publish`.
+store, and it refuses a piece that isn't pinned to engine formats (`spite pin`), so a shared seed
+link never quietly plays a different performance. See `packages/cli/README.md` for `fallback`,
+`publish` and `pin`.
 
 ## Browser tests
 

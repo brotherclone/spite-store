@@ -1,8 +1,11 @@
 import {
   SAMPLE_RATE,
   barFrame,
+  checkPin,
+  describePinMismatch,
   type Fallback,
   type Manifest,
+  type PinMismatch,
   type Stem,
 } from '@spite-store/engine';
 import { EngineNode, defaultWorkletUrl } from './audio.js';
@@ -38,13 +41,20 @@ const template = `
 `;
 
 /** Why the player is playing the fixed recording instead of the generative performance. */
-export type FallbackReason = 'forced' | 'unsupported' | 'stems' | 'worklet';
+export type FallbackReason = 'forced' | 'engine' | 'unsupported' | 'stems' | 'worklet';
 
-const REASON_TEXT: Record<FallbackReason, string> = {
+const REASON_TEXT: Record<Exclude<FallbackReason, 'engine'>, string> = {
   forced: 'the fixed recording was requested',
   unsupported: "this browser can't play the generative version",
   stems: "some stems couldn't be loaded",
   worklet: "the audio engine couldn't start",
+};
+
+/** The status reason for a piece pinned to other engine formats, by direction. */
+const engineReasonText = (mismatches: readonly PinMismatch[]): string => {
+  const made = new Set(mismatches.map((m) => m.made));
+  const which = made.size > 1 ? 'a different' : made.has('older') ? 'an earlier' : 'a later';
+  return `it was made with ${which} version of the player`;
 };
 
 /** Whether this page can run the generative player: an AudioWorklet and verified stem loads. */
@@ -256,6 +266,22 @@ export class SpitePlayer extends HTMLElement {
           return this.fail([`${manifest.title} has no fallback recording (fallback attribute)`]);
         return await this.enterFallback(manifest, 'forced', token);
       }
+      // A piece pinned to other engine formats would play a different performance from the one
+      // its seed link names, so it is never played generatively here.
+      const mismatches = checkPin(manifest);
+      if (mismatches.length > 0) {
+        const lines = mismatches.map(describePinMismatch);
+        if (!manifest.fallback) {
+          return this.fail([`${manifest.title} can't be played by this player:`, ...lines]);
+        }
+        return await this.enterFallback(
+          manifest,
+          'engine',
+          token,
+          lines,
+          engineReasonText(mismatches),
+        );
+      }
       if (manifest.fallback && !generativeSupported()) {
         return await this.enterFallback(manifest, 'unsupported', token);
       }
@@ -312,6 +338,7 @@ export class SpitePlayer extends HTMLElement {
     reason: FallbackReason,
     token: number,
     details: readonly string[] = [],
+    reasonText = REASON_TEXT[reason as Exclude<FallbackReason, 'engine'>],
   ): Promise<void> {
     const recording = manifest.fallback!;
     this.perf = null;
@@ -355,7 +382,7 @@ export class SpitePlayer extends HTMLElement {
     media.load();
     this.ui.play.disabled = false;
     this.setStatus(
-      [`Fixed recording of seed ${recording.seed} · ${REASON_TEXT[reason]}`, ...details].join('\n'),
+      [`Fixed recording of seed ${recording.seed} · ${reasonText}`, ...details].join('\n'),
     );
     this.dispatchEvent(
       new CustomEvent('ready', { detail: { seed: recording.seed, bars: recording.bars } }),
