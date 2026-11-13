@@ -49,42 +49,76 @@ export function realizeForRender(
   return { events, endBar: state.bar };
 }
 
+/** A render plan made before every stem is present. */
+export interface PartialPlan {
+  /** Voices of missing stems have `end === start`, so they render nothing. */
+  plan: RenderPlan;
+  /** Indexes into `plan.voices` of the voices whose stem is missing, ascending. */
+  pending: number[];
+  /** Every frame before this one renders exactly as with every stem present. */
+  horizon: number;
+  /** Whether every stem is present: then `plan` is the full plan and its length is final. */
+  final: boolean;
+}
+
 /**
  * Turns a trace into voices. Each clip sounds from its bar's start frame until its stem ends, or
  * until the same slot id starts its next event, after which it fades out over CHOKE_FRAMES. The
  * render covers every realized bar, then runs until the last tail ends.
+ *
+ * Stems may be missing: their voices are pending and zero-length. Voices are in start order, so
+ * every voice starting before the first pending one is complete, and no later voice reaches an
+ * earlier frame; frames before `horizon` are therefore exact. Until `final`, `totalFrames` is a
+ * lower bound (the realized bars, or a known tail beyond them).
  */
-export function planRender(
+export function planRenderPartial(
   manifest: Manifest,
   events: readonly TraceEvent[],
   endBar: number,
   stems: ReadonlyMap<string, Stem>,
-): RenderPlan {
+): PartialPlan {
   const voices: Voice[] = [];
+  const pending: number[] = [];
   const lastBySlot = new Map<string, Voice>();
   for (const event of events) {
     const stem = stems.get(event.clipHash);
-    if (!stem) throw new Error(`Missing stem ${event.clipHash}`);
     const start = barFrame(manifest, event.bar);
     const previous = lastBySlot.get(event.slot);
     if (previous) {
       previous.choke = start;
       previous.end = Math.min(previous.end, start + CHOKE_FRAMES);
     }
+    if (!stem) pending.push(voices.length);
     const voice: Voice = {
       slot: event.slot,
       clipHash: event.clipHash,
       gain: event.gain,
       start,
       choke: null,
-      end: start + stem.frames,
+      end: stem ? start + stem.frames : start,
     };
     voices.push(voice);
     lastBySlot.set(event.slot, voice);
   }
   let totalFrames = barFrame(manifest, endBar);
   for (const v of voices) if (v.end > totalFrames) totalFrames = v.end;
-  return { totalFrames, voices };
+  const plan = { totalFrames, voices };
+  const horizon = pending.length > 0 ? voices[pending[0]!]!.start : totalFrames;
+  return { plan, pending, horizon, final: pending.length === 0 };
+}
+
+/** The full render plan. Every stem the trace uses must be present. */
+export function planRender(
+  manifest: Manifest,
+  events: readonly TraceEvent[],
+  endBar: number,
+  stems: ReadonlyMap<string, Stem>,
+): RenderPlan {
+  const partial = planRenderPartial(manifest, events, endBar, stems);
+  if (!partial.final) {
+    throw new Error(`Missing stem ${partial.plan.voices[partial.pending[0]!]!.clipHash}`);
+  }
+  return partial.plan;
 }
 
 export function createRenderState(): RenderState {

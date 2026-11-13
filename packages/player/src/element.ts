@@ -10,7 +10,14 @@ import {
 } from '@spite-store/engine';
 import { EngineNode, defaultWorkletUrl } from './audio.js';
 import { Lanes } from './lanes.js';
-import { LoadError, loadManifest, loadPerformance, sha256Hex, type Performance } from './loader.js';
+import {
+  LoadError,
+  loadManifest,
+  sha256Hex,
+  streamPerformance,
+  type Performance,
+} from './loader.js';
+import type { LateMode, PlanUpdate } from './protocol.js';
 import { randomSeed } from './seed.js';
 
 const FADE_SECONDS = 0.01;
@@ -26,6 +33,7 @@ const template = `
   [part='lanes'] { display: block; width: 100%; height: 40px; cursor: pointer; }
   [part='status'] { white-space: pre-wrap; font-size: 12px; min-height: 1.2em; margin-top: 4px; }
   [part='status'].error { color: var(--spite-error, #c92a2a); }
+  [part='late-label'] { font-size: 12px; }
 </style>
 <div part="controls">
   <button part="play" type="button" disabled>Play</button>
@@ -33,6 +41,7 @@ const template = `
   <button part="reroll" type="button">Reroll</button>
   <label>Bars <input part="bars" type="number" min="1" step="1" /></label>
   <button part="copy" type="button">Copy link</button>
+  <label part="late-label"><input part="late" type="checkbox" /> Don't wait for late stems</label>
   <span part="time">0:00 / 0:00</span>
 </div>
 <input part="scrub" type="range" min="0" max="0" step="1" value="0" aria-label="Position" disabled />
@@ -63,6 +72,14 @@ const generativeSupported = (): boolean =>
   globalThis.isSecureContext === true &&
   globalThis.crypto?.subtle !== undefined;
 
+/** The plan fields of a performance, as the worklet takes them (never the stems or the trace). */
+const planOf = (perf: Performance): PlanUpdate => ({
+  plan: perf.plan,
+  pending: perf.pending,
+  horizon: perf.horizon,
+  final: perf.final,
+});
+
 const clock = (frames: number): string => {
   const s = Math.floor(frames / SAMPLE_RATE);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
@@ -74,12 +91,14 @@ const clock = (frames: number): string => {
  * work and the manifest has a fallback recording, it plays that fixed recording instead.
  */
 export class SpitePlayer extends HTMLElement {
-  static observedAttributes = ['src', 'stems', 'seed', 'bars', 'fallback'];
+  static observedAttributes = ['src', 'stems', 'seed', 'bars', 'fallback', 'late'];
 
   /** For tests and advanced embeds: replaces `fetch` for manifest and stem requests. */
   fetchImpl: typeof fetch = (...args) => fetch(...args);
   /** Worklet module URL; defaults to `worklet.js` next to this module. */
   workletUrl = defaultWorkletUrl();
+  /** How many stem requests run at once. Tests narrow it to observe the order. */
+  queueWidth = 4;
 
   private readonly root: ShadowRoot;
   private readonly ui: {
@@ -88,6 +107,7 @@ export class SpitePlayer extends HTMLElement {
     reroll: HTMLButtonElement;
     bars: HTMLInputElement;
     copy: HTMLButtonElement;
+    late: HTMLInputElement;
     time: HTMLElement;
     scrub: HTMLInputElement;
     lanes: HTMLCanvasElement;
@@ -96,6 +116,19 @@ export class SpitePlayer extends HTMLElement {
   private readonly lanes: Lanes;
   private readonly cache = new Map<string, Stem>();
   private perf: Performance | null = null;
+  /** The performance being streamed, before and after it becomes playable. */
+  private loading: Performance | null = null;
+  /** Aborts the current load's stem requests. */
+  private abort: AbortController | null = null;
+  /** Whether play has been pressed since this performance loaded. */
+  private started = false;
+  /** Whether the worklet is holding for a late stem (wait mode). */
+  private held = false;
+  /** Voices left out because their stem was late (skip mode). */
+  private readonly skippedVoices = new Set<number>();
+  /** Stem failures in this load, and the frame playback must stop at because of them. */
+  private failures: string[] = [];
+  private blockedAt: number | null = null;
   private loadToken = 0;
   private loadScheduled = false;
   private context: AudioContext | null = null;
@@ -123,6 +156,7 @@ export class SpitePlayer extends HTMLElement {
       reroll: q('reroll'),
       bars: q('bars'),
       copy: q('copy'),
+      late: q('late'),
       time: q('time'),
       scrub: q('scrub'),
       lanes: q('lanes'),
@@ -140,6 +174,9 @@ export class SpitePlayer extends HTMLElement {
       this.changePerformance(this.seed ?? randomSeed(), Number(this.ui.bars.value)),
     );
     this.ui.copy.addEventListener('click', () => void this.copyLink());
+    this.ui.late.addEventListener('change', () =>
+      this.setAttribute('late', this.ui.late.checked ? 'skip' : 'wait'),
+    );
     this.ui.scrub.addEventListener('input', () => void this.seek(Number(this.ui.scrub.value)));
   }
 
@@ -152,8 +189,21 @@ export class SpitePlayer extends HTMLElement {
     void this.pause();
   }
 
-  attributeChangedCallback(_name: string, oldValue: string | null, newValue: string | null): void {
-    if (oldValue !== newValue && this.isConnected) this.scheduleLoad();
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
+    if (oldValue === newValue) return;
+    if (name === 'late') {
+      // Applies from the next clip that starts; no reload.
+      this.ui.late.checked = this.late === 'skip';
+      if (this.engineLoaded) this.engine?.setLate(this.late);
+      this.showStatus();
+      return;
+    }
+    if (this.isConnected) this.scheduleLoad();
+  }
+
+  /** What playback does at a clip whose stem is still loading. Anything but `skip` waits. */
+  get late(): LateMode {
+    return this.getAttribute('late') === 'skip' ? 'skip' : 'wait';
   }
 
   get seed(): string | null {
@@ -184,7 +234,7 @@ export class SpitePlayer extends HTMLElement {
         ? Math.min(this.totalFrames, Math.round(this.media.currentTime * SAMPLE_RATE))
         : 0;
     }
-    if (!this.playing || !this.context) return this.lastFrame;
+    if (!this.playing || !this.context || this.held) return this.lastFrame;
     const total = this.perf?.plan.totalFrames ?? 0;
     return Math.min(
       total,
@@ -202,7 +252,10 @@ export class SpitePlayer extends HTMLElement {
       const d = this.media?.duration;
       return d !== undefined && Number.isFinite(d) ? Math.round(d * SAMPLE_RATE) : 0;
     }
-    return this.perf?.plan.totalFrames ?? 0;
+    const perf = this.perf;
+    if (!perf) return 0;
+    // Until every stem is in, tails are unknown: show the realized bars.
+    return perf.final ? perf.plan.totalFrames : barFrame(perf.manifest, perf.endBar);
   }
 
   /** Sets seed and bars from the UI or a random choice, and announces it. */
@@ -240,9 +293,17 @@ export class SpitePlayer extends HTMLElement {
 
   private async load(): Promise<void> {
     const token = ++this.loadToken;
+    this.abort?.abort();
+    this.abort = null;
     await this.stop();
     this.leaveFallback();
     this.perf = null;
+    this.started = false;
+    this.held = false;
+    this.skippedVoices.clear();
+    this.failures = [];
+    this.blockedAt = null;
+    this.ui.late.checked = this.late === 'skip';
     this.lanes.setPerformance(null);
     this.ui.play.disabled = true;
     this.ui.scrub.disabled = true;
@@ -285,43 +346,135 @@ export class SpitePlayer extends HTMLElement {
       if (manifest.fallback && !generativeSupported()) {
         return await this.enterFallback(manifest, 'unsupported', token);
       }
-      let perf: Performance;
-      try {
-        perf = await loadPerformance({
-          manifest,
-          seed,
-          bars,
-          stemsBase: this.stemsBase,
-          cache: this.cache,
-          fetch: this.fetchImpl,
-          onProgress: (loaded, total) => {
-            if (token === this.loadToken) this.setStatus(`Loading stems ${loaded} / ${total}`);
-          },
-        });
-      } catch (error) {
-        if (!(error instanceof LoadError) || !manifest.fallback) throw error;
-        if (token !== this.loadToken) return;
-        this.dispatchEvent(new CustomEvent('error', { detail: { messages: error.messages } }));
-        return await this.enterFallback(manifest, 'stems', token, error.messages);
+      const controller = new AbortController();
+      this.abort = controller;
+      const live = () => token === this.loadToken;
+      const { perf, done } = streamPerformance({
+        manifest,
+        seed,
+        bars,
+        stemsBase: this.stemsBase,
+        cache: this.cache,
+        fetch: this.fetchImpl,
+        width: this.queueWidth,
+        signal: controller.signal,
+        onProgress: () => {
+          if (live()) this.showStatus();
+        },
+        onStem: () => {
+          if (live()) this.stemArrived(perf);
+        },
+        onFailure: (hash, message) => {
+          if (live()) this.stemFailed(perf, hash, message);
+        },
+      });
+      this.loading = perf;
+      this.showStatus();
+      this.checkReady(perf);
+      const failures = await done;
+      if (!live()) return;
+      if (failures.length > 0 && !this.started) {
+        // Failures before the first play behave as before streaming: one error naming each stem.
+        this.perf = null;
+        this.lanes.setPerformance(null);
+        this.ui.play.disabled = true;
+        this.ui.scrub.disabled = true;
+        if (!manifest.fallback) throw new LoadError(failures);
+        this.dispatchEvent(new CustomEvent('error', { detail: { messages: failures } }));
+        return await this.enterFallback(manifest, 'stems', token, failures);
       }
-      if (token !== this.loadToken) return;
-      this.perf = perf;
-      this.lastFrame = 0;
-      this.lanes.setPerformance(perf);
-      this.ui.scrub.max = String(perf.plan.totalFrames);
-      this.ui.scrub.value = '0';
-      this.ui.scrub.disabled = false;
-      this.ui.play.disabled = false;
-      this.updateTime(0);
-      const loaded = [...perf.stems.keys()].length;
-      this.setStatus(
-        `${manifest.title} · ${perf.events.length} events · stems ${loaded} / ${loaded}`,
-      );
-      this.dispatchEvent(new CustomEvent('ready', { detail: { seed, bars } }));
     } catch (error) {
       if (token !== this.loadToken) return;
       this.fail(error instanceof LoadError ? error.messages : [String(error)]);
     }
+  }
+
+  /** Makes the performance playable once the stems sounding at its start are in. */
+  private checkReady(perf: Performance): void {
+    if (this.perf === perf || !(perf.final || perf.horizon > 0)) return;
+    if (this.failures.length > 0) return; // a failure before the first play: reported when done
+    this.perf = perf;
+    this.lastFrame = 0;
+    this.lanes.setPerformance(perf, this.skippedVoices);
+    this.ui.scrub.max = String(this.totalFrames);
+    this.ui.scrub.value = '0';
+    this.ui.scrub.disabled = false;
+    this.ui.play.disabled = false;
+    this.updateTime(0);
+    this.showStatus();
+    this.dispatchEvent(new CustomEvent('ready', { detail: { seed: perf.seed, bars: perf.bars } }));
+    if (perf.final) this.allLoaded(perf);
+  }
+
+  private allLoaded(perf: Performance): void {
+    this.ui.scrub.max = String(this.totalFrames);
+    this.renderPosition(this.position);
+    this.dispatchEvent(new CustomEvent('loaded', { detail: { seed: perf.seed, bars: perf.bars } }));
+  }
+
+  private stemArrived(perf: Performance): void {
+    if (this.perf !== perf) return this.checkReady(perf);
+    if (this.engineLoaded === perf) this.engine!.update(planOf(perf), perf.stems);
+    this.lanes.setPerformance(perf, this.skippedVoices, this.position);
+    this.showStatus();
+    if (perf.final) this.allLoaded(perf);
+  }
+
+  /**
+   * A stem failed. Before the first play, the load reports it when every stem has settled. After,
+   * playback goes on until the first frame that needs it, then stops (see onStopped).
+   */
+  private stemFailed(perf: Performance, hash: string, message: string): void {
+    this.failures.push(message);
+    if (!this.started) {
+      this.ui.play.disabled = true;
+      return;
+    }
+    this.dispatchEvent(new CustomEvent('error', { detail: { messages: [message] } }));
+    const frame = perf.plan.voices.find((v) => v.clipHash === hash)!.start;
+    this.blockedAt = this.blockedAt === null ? frame : Math.min(this.blockedAt, frame);
+    if (this.engineLoaded === perf) this.engine!.block(this.blockedAt);
+    this.showStatus();
+  }
+
+  /** Playback reached the frame a failed stem is needed at: fall back, or show the error. */
+  private async blockedStop(frame: number): Promise<void> {
+    const perf = this.perf;
+    if (!perf) return;
+    this.playing = false;
+    this.held = false;
+    cancelAnimationFrame(this.animation);
+    this.ui.play.textContent = 'Play';
+    this.lastFrame = frame;
+    this.renderPosition(frame);
+    const { manifest } = perf;
+    const failures = this.failures;
+    if (!manifest.fallback) {
+      this.ui.play.disabled = true;
+      return this.fail(failures);
+    }
+    // The recording is one fixed performance: keep the position only if it is this one.
+    const same = manifest.fallback.seed === perf.seed && manifest.fallback.bars === perf.bars;
+    await this.enterFallback(manifest, 'stems', this.loadToken, failures);
+    if (same && this.media) this.media.currentTime = frame / SAMPLE_RATE;
+  }
+
+  /** The status line for a generative performance: progress, holds, skips and failures. */
+  private showStatus(): void {
+    if (this.fallback) return;
+    const perf = this.perf ?? this.loading;
+    if (!perf) return;
+    const count = `stems ${perf.stems.size} / ${perf.needed.length}`;
+    if (this.perf !== perf) return this.setStatus(`Loading ${count}`);
+    const parts = [`${perf.manifest.title} · ${perf.events.length} events · ${count}`];
+    if (this.held) parts.push('Buffering…');
+    if (this.skippedVoices.size > 0) {
+      const n = this.skippedVoices.size;
+      parts.push(`${n} clip${n === 1 ? '' : 's'} skipped (arrived late)`);
+    }
+    const lines = [parts.join(' · ')];
+    if (this.started) lines.push(...this.failures);
+    this.setStatus(lines.join('\n'), this.started && this.failures.length > 0);
   }
 
   private get stemsBase(): string {
@@ -460,6 +613,34 @@ export class SpitePlayer extends HTMLElement {
         this.lastTime = this.context!.currentTime;
         if (!playing) this.renderPosition(frame);
       };
+      this.engine.onWaiting = (frame) => {
+        this.held = true;
+        this.lastFrame = frame;
+        this.renderPosition(frame);
+        this.showStatus();
+        this.dispatchEvent(new CustomEvent('waiting', { detail: { frame } }));
+      };
+      this.engine.onPlaying = (frame) => {
+        this.held = false;
+        this.lastFrame = frame;
+        this.lastTime = this.context!.currentTime;
+        this.showStatus();
+        this.dispatchEvent(new CustomEvent('playing', { detail: { frame } }));
+      };
+      this.engine.onSkipped = (voice) => {
+        const perf = this.perf;
+        const event = perf?.events[voice];
+        if (!perf || !event) return;
+        this.skippedVoices.add(voice);
+        this.lanes.setPerformance(perf, this.skippedVoices, this.position);
+        this.showStatus();
+        this.dispatchEvent(
+          new CustomEvent('skipped', {
+            detail: { slot: event.slot, clipHash: event.clipHash, bar: event.bar },
+          }),
+        );
+      };
+      this.engine.onStopped = (frame) => void this.blockedStop(frame);
       this.engine.onEnded = (frame) => {
         this.playing = false;
         this.lastFrame = frame;
@@ -469,9 +650,13 @@ export class SpitePlayer extends HTMLElement {
         this.dispatchEvent(new CustomEvent('ended'));
       };
     }
-    if (this.engineLoaded !== this.perf && this.perf) {
-      await this.engine.load(this.perf.plan, this.perf.stems);
-      this.engineLoaded = this.perf;
+    const perf = this.perf;
+    if (this.engineLoaded !== perf && perf) {
+      await this.engine.load(planOf(perf), perf.stems, { late: this.late });
+      this.engineLoaded = perf;
+      // Stems may have arrived while the worklet was loading; bring it up to date.
+      this.engine.update(planOf(perf), perf.stems);
+      if (this.blockedAt !== null) this.engine.block(this.blockedAt);
       this.engine.seek(this.lastFrame);
     }
     return this.engine;
@@ -491,18 +676,25 @@ export class SpitePlayer extends HTMLElement {
 
   async play(): Promise<void> {
     if (this.fallback) return this.playFallback();
-    if (!this.perf || this.playing) return;
+    const perf = this.perf;
+    if (!perf || this.playing) return;
+    // A stem that failed before the first play is reported when the load settles.
+    if (!this.started && this.failures.length > 0) return;
+    // From the moment play is pressed, a stem failure stops playback where the stem is needed.
+    this.started = true;
     let engine: EngineNode;
     try {
       engine = await this.ensureAudio();
     } catch (error) {
-      const { manifest } = this.perf;
+      if (this.perf !== perf) return;
+      const { manifest } = perf;
       if (!manifest.fallback) throw error;
       await this.enterFallback(manifest, 'worklet', this.loadToken);
       return this.playFallback();
     }
     await this.context!.resume();
-    if (this.lastFrame >= this.perf.plan.totalFrames) this.lastFrame = 0;
+    if (this.perf !== perf || this.playing) return; // reloaded, or played again, meanwhile
+    if (perf.final && this.lastFrame >= perf.plan.totalFrames) this.lastFrame = 0;
     this.lastTime = this.context!.currentTime;
     this.playing = true;
     engine.play();
@@ -552,6 +744,7 @@ export class SpitePlayer extends HTMLElement {
     }
     if (!this.perf) return;
     const target = Math.max(0, Math.min(Math.round(frame), this.perf.plan.totalFrames));
+    this.held = false;
     if (this.playing && this.engine) {
       this.ramp(0);
       await this.wait();

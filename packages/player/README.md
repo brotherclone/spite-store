@@ -25,14 +25,19 @@ The build is two self-contained files, `dist/index.js` (the element, engine incl
 | `seed`     | Any string. Omit it and the player picks a pronounceable random seed (e.g. `tamirobe`), shows it and sets the attribute. |
 | `bars`     | Length in bars, a positive integer. Default 64. The piece may end earlier if its graph does.                             |
 | `fallback` | Boolean. Play the manifest's fixed recording instead of the generative performance (see below).                          |
+| `late`     | `wait` (default) or `skip`: what playback does at a clip whose stem is still loading (see below).                        |
 
-Changing any attribute stops playback and loads the new performance.
+Changing any attribute except `late` stops playback and loads the new performance. `late` applies
+from the next clip that starts.
 
 ## Events, properties and methods
 
 |                                                      |                                                                                                                                                                                  |
 | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ready`                                              | The performance is loaded and playable.                                                                                                                                          |
+| `ready`                                              | The performance is playable from its start. Later stems may still be loading.                                                                                                    |
+| `loaded`                                             | Every stem the performance uses has arrived. The length (scrub bar, time) is final from here.                                                                                    |
+| `waiting`, `playing`                                 | Under `late="wait"`: playback is holding at `detail.frame` for a stem, and has resumed from it.                                                                                  |
+| `skipped`                                            | Under `late="skip"`: a clip was left out because its stem was late. `detail: { slot, clipHash, bar }`.                                                                           |
 | `seedchange`                                         | The seed or length changed from the UI or a random choice. `detail: { seed, bars }`. Hosts use it to keep their URL in sync.                                                     |
 | `ended`                                              | Playback reached the end of the render (after the last tail).                                                                                                                    |
 | `error`                                              | Loading failed. `detail: { messages }`: validation messages, or each failing stem's clip ids and hash.                                                                           |
@@ -45,18 +50,43 @@ Changing any attribute stops playback and loads the new performance.
 
 ## Styling
 
-Shadow parts: `controls`, `play`, `seed`, `reroll`, `bars`, `copy`, `time`, `scrub`, `lanes`,
-`status`. Custom properties: `--spite-accent` (clips, scrub bar), `--spite-ink` (text, playhead),
-`--spite-band` (alternate sections), `--spite-error`.
+Shadow parts: `controls`, `play`, `seed`, `reroll`, `bars`, `copy`, `late-label`, `late` (the
+"Don't wait for late stems" checkbox), `time`, `scrub`, `lanes`, `status`. Custom properties:
+`--spite-accent` (clips, scrub bar), `--spite-ink` (text, playhead), `--spite-band` (alternate
+sections), `--spite-pending` (clips whose stem is loading), `--spite-skipped` (clips left out),
+`--spite-error`.
 
 ## How it plays
 
 1. Fetch the manifest and check it with the engine's `checkManifest`.
 2. Realize the performance and plan the render on the main thread.
-3. Fetch only the stems the performance uses, verify each against its sha256 (`crypto.subtle`), and
-   decode it with the engine's WAV decoder. The browser's decoder is never used.
+3. Fetch only the stems the performance uses, in order of first use, verify each against its
+   sha256 (`crypto.subtle`), and decode it with the engine's WAV decoder. The browser's decoder is
+   never used. The render plan is redone as each stem arrives; frames before the first missing stem
+   are always exact.
 4. On the first play, create a 48 kHz `AudioContext` and an AudioWorklet that runs the engine
    renderer, 128 frames at a time.
+
+## Streaming and late stems
+
+Stems are fetched four at a time in the order the performance first uses them, so play is enabled
+as soon as the stems sounding at the start are in (`ready`). The rest keep loading during playback
+until `loaded`. Until then the scrub bar shows the realized bars; the last tails extend it once
+every stem's length is known. The lanes draw a clip whose stem is still loading as an outline.
+
+When playback reaches a clip whose stem hasn't arrived, the `late` attribute (or the "Don't wait
+for late stems" checkbox) decides what happens:
+
+| `late`           | Behaviour                                                                                                                                                                                                                                         | Promise                                                                                   |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `wait` (default) | Holds at that exact frame (silence, "Buffering…", `waiting`) and resumes from it when the stem arrives (`playing`). Seeking ahead of the loaded stems holds there until every stem that starts earlier is in, because their tails might reach it. | Sample-identical to the offline render, whatever the network does. Only pauses are added. |
+| `skip`           | Keeps time going and leaves the late clip out for that whole occurrence, even if its stem arrives partway through. The status counts skipped clips and `skipped` names each one. Seeking clears the skips.                                        | Identical to `wait` whenever nothing arrives late. Otherwise a different performance.     |
+
+A stem that fails (missing, wrong hash, undecodable) after play has been pressed doesn't stop
+playback at once: it plays on correctly to the first frame that needs that stem, then stops. With a
+fallback recording it switches to it, paused, at the same position if the recording is this
+performance and at the start otherwise; without one it shows the error. A failure before the first
+play behaves as an ordinary load error (below).
 
 ## Fallback recording
 
