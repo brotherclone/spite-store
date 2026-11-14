@@ -22,7 +22,7 @@
 ## 4. Release
 
 - [x] 4.1 Run the full suite: `pnpm test`, `pnpm test:browser`, `pnpm lint`, `pnpm typecheck` and `pnpm format:check`, all passing, with `git diff fixtures/golden` empty.
-- [ ] 4.2 Verify on a preview deployment with the browser's network throttled (DevTools "Fast 4G"): the River's play button enables before progress reaches the total; under `wait`, playback holds and resumes if it catches up; with the control set to skip, the status counts skipped clips. Then merge into `develop` and `master`, and confirm production serves the new player.
+- [x] 4.2 Verify on a preview deployment with the browser's network throttled (DevTools "Fast 4G"): the River's play button enables before progress reaches the total; under `wait`, playback holds and resumes if it catches up; with the control set to skip, the status counts skipped clips. Then merge into `develop` and `master`, and confirm production serves the new player.
 
 ## Workflow follow-up
 
