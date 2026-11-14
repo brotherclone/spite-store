@@ -6,10 +6,12 @@ export {
   LoadError,
   loadManifest,
   loadPerformance,
+  streamPerformance,
   type LoadOptions,
+  type StreamOptions,
   type Performance,
 } from './loader.js';
-export { Lanes, layoutLanes } from './lanes.js';
+export { Lanes, layoutLanes, type BlockState } from './lanes.js';
 export { randomSeed } from './seed.js';
 export { PROCESSOR_NAME, type FromWorklet, type ToWorklet } from './protocol.js';
 

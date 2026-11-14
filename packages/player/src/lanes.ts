@@ -5,22 +5,33 @@ const BAND = 20;
 const ROW = 22;
 export const LABEL_WIDTH = 64;
 
+/** `pending`: its stem is still loading. `skipped`: left out because its stem was late. */
+export type BlockState = 'ready' | 'pending' | 'skipped';
+
 interface Block {
   row: number;
   start: number;
   bodyEnd: number;
   end: number;
   label: string;
+  state: BlockState;
 }
 
-/** Lays out a performance as lanes: section visits, then one row per slot id (code-unit order). */
-export function layoutLanes(perf: Performance): {
+/**
+ * Lays out a performance as lanes: section visits, then one row per slot id (code-unit order).
+ * A clip whose stem is still loading spans its clip length (its tail isn't known yet).
+ */
+export function layoutLanes(
+  perf: Performance,
+  skipped: ReadonlySet<number> = new Set(),
+): {
   rows: string[];
   sections: { label: string; start: number; end: number }[];
   blocks: Block[];
   total: number;
 } {
   const { manifest, plan, events, visits } = perf;
+  const pending = new Set(perf.pending);
   const rows = [...new Set(plan.voices.map((v) => v.slot))].sort((a, b) =>
     a < b ? -1 : a > b ? 1 : 0,
   );
@@ -28,13 +39,27 @@ export function layoutLanes(perf: Performance): {
   const blocks = plan.voices.map((voice, i) => {
     const event = events[i]!;
     const clip = clipByHash.get(voice.clipHash)!;
-    const bodyEnd = Math.min(voice.end, barFrame(manifest, event.bar + clip.c.lengthBars));
+    const clipEnd = barFrame(manifest, event.bar + clip.c.lengthBars);
+    const state: BlockState = skipped.has(i) ? 'skipped' : pending.has(i) ? 'pending' : 'ready';
+    if (pending.has(i)) {
+      const end = Math.min(clipEnd, voice.choke ?? clipEnd);
+      return {
+        row: rows.indexOf(voice.slot),
+        start: voice.start,
+        bodyEnd: end,
+        end,
+        label: clip.id,
+        state,
+      };
+    }
+    const bodyEnd = Math.min(voice.end, clipEnd);
     return {
       row: rows.indexOf(voice.slot),
       start: voice.start,
       bodyEnd,
       end: voice.end,
       label: clip.id,
+      state,
     };
   });
   const sections = visits.map((v) => ({
@@ -42,7 +67,8 @@ export function layoutLanes(perf: Performance): {
     start: barFrame(manifest, v.startBar),
     end: barFrame(manifest, v.endBar),
   }));
-  return { rows, sections, blocks, total: plan.totalFrames };
+  const total = perf.final ? plan.totalFrames : barFrame(manifest, perf.endBar);
+  return { rows, sections, blocks, total };
 }
 
 /** Canvas lane view with a playhead. Clicking maps x to a frame and calls `onSeek`. */
@@ -77,9 +103,14 @@ export class Lanes {
     return LABEL_WIDTH + (frame / total) * Math.max(1, width - LABEL_WIDTH);
   }
 
-  setPerformance(perf: Performance | null): void {
-    this.layout = perf ? layoutLanes(perf) : null;
-    this.position = 0;
+  /** Lays out a performance (or clears the view), keeping `position` for the playhead. */
+  setPerformance(
+    perf: Performance | null,
+    skipped: ReadonlySet<number> = new Set(),
+    position = 0,
+  ): void {
+    this.layout = perf ? layoutLanes(perf, skipped) : null;
+    this.position = position;
     const rows = this.layout?.rows.length ?? 0;
     this.canvas.style.height = `${BAND + rows * ROW + 4}px`;
     this.draw();
@@ -111,6 +142,8 @@ export class Lanes {
     const accent = color('--spite-accent', '#d6336c');
     const ink = color('--spite-ink', '#222');
     const band = color('--spite-band', '#e9ecef');
+    const pendingColor = color('--spite-pending', '#adb5bd');
+    const skippedColor = color('--spite-skipped', '#ced4da');
     g.font = '11px system-ui, sans-serif';
     g.textBaseline = 'middle';
 
@@ -132,12 +165,22 @@ export class Lanes {
       const x0 = this.xAt(b.start, width);
       const xBody = this.xAt(b.bodyEnd, width);
       const x1 = this.xAt(b.end, width);
+      if (b.state === 'pending') {
+        // Outline only: the clip is coming, but nothing of it can sound yet.
+        g.strokeStyle = pendingColor;
+        g.lineWidth = 1;
+        g.strokeRect(x0 + 0.5, y + 0.5, Math.max(1, xBody - x0 - 2), h - 1);
+        g.fillStyle = pendingColor;
+        g.fillText(b.label, x0 + 3, y + h / 2, Math.max(0, xBody - x0 - 6));
+        continue;
+      }
+      const fill = b.state === 'skipped' ? skippedColor : accent;
       g.globalAlpha = 0.35;
-      g.fillStyle = accent;
+      g.fillStyle = fill;
       g.fillRect(xBody, y, Math.max(0, x1 - xBody), h);
       g.globalAlpha = 1;
       g.fillRect(x0, y, Math.max(1, xBody - x0 - 1), h);
-      g.fillStyle = '#fff';
+      g.fillStyle = b.state === 'skipped' ? ink : '#fff';
       g.fillText(b.label, x0 + 3, y + h / 2, Math.max(0, xBody - x0 - 6));
     }
     const px = this.xAt(this.position, width);

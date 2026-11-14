@@ -74,7 +74,7 @@ function player(attrs: Record<string, string>, srv = server()): SpitePlayer {
 /** The next `type` event; rejects with the messages if an `error` event comes first instead. */
 function next(
   el: SpitePlayer,
-  type: 'ready' | 'error' | 'ended' | 'seedchange',
+  type: 'ready' | 'loaded' | 'error' | 'ended' | 'seedchange',
 ): Promise<CustomEvent> {
   return new Promise((resolve, reject) => {
     el.addEventListener(type, (e) => resolve(e as CustomEvent), { once: true });
@@ -112,7 +112,7 @@ describe('<spite-player>', () => {
   it('fetches only the stems the performance uses and reports progress', async () => {
     const srv = server();
     const el = player({ src: MANIFEST, seed: '42', bars: '16' }, srv);
-    await next(el, 'ready');
+    await next(el, 'loaded');
     const needed = new Set(el.performance!.events.map((e) => e.clipHash.slice(7)));
     expect(needed.size).toBeLessThan(Object.keys(placeholder.clips).length);
     expect(srv.stemRequests.sort()).toEqual([...needed].sort());
@@ -185,7 +185,7 @@ describe('<spite-player>', () => {
     history.replaceState(null, '', url);
     try {
       const el = player({ src: MANIFEST, seed: 'tamirobe', bars: '32' });
-      await next(el, 'ready');
+      await next(el, 'loaded');
       const link = new URL(el.link());
       expect(link.searchParams.get('x')).toBe('1');
       expect(link.searchParams.get('seed')).toBe('tamirobe');
@@ -212,7 +212,7 @@ describe('<spite-player>', () => {
   it('draws lanes from the plan and seeks where the view is clicked', async () => {
     const el = player({ src: MANIFEST, seed: '42', bars: '16' });
     el.style.width = '800px';
-    await next(el, 'ready');
+    await next(el, 'loaded');
     const perf = el.performance!;
     const layout = layoutLanes(perf);
     expect(layout.rows).toEqual([...new Set(perf.events.map((e) => e.slot))].sort());
