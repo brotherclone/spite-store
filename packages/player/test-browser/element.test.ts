@@ -1,4 +1,10 @@
-import { barFrame, canonicalTrace, synthesizeStemWav, type Manifest } from '@spite-store/engine';
+import {
+  barFrame,
+  canonicalTrace,
+  encodeWav16,
+  synthesizeStem,
+  type Manifest,
+} from '@spite-store/engine';
 import { afterEach, beforeAll, describe, expect, inject, it } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import invalidManifest from '../../../schema/examples/invalid/dangling-transition.json';
@@ -28,6 +34,8 @@ afterEach(() => {
 interface Server {
   fetch: typeof fetch;
   stemRequests: string[];
+  /** Every stem URL path requested, whatever its extension. */
+  stemPaths: string[];
 }
 
 /** A fake server for manifests and stems, recording stem requests. */
@@ -41,12 +49,14 @@ function server(
   const manifests = options.manifests ?? { [MANIFEST]: placeholder };
   const stems = options.stems ?? files;
   const stemRequests: string[] = [];
+  const stemPaths: string[] = [];
   const fetchImpl = (async (input: RequestInfo | URL) => {
     const url = new URL(
       typeof input === 'string' ? input : input instanceof URL ? input.href : input.url,
     );
     if (url.pathname in manifests) return new Response(JSON.stringify(manifests[url.pathname]));
-    const match = /^\/stems\/([0-9a-f]{64})\.wav$/.exec(url.pathname);
+    if (url.pathname.startsWith('/stems/')) stemPaths.push(url.pathname);
+    const match = /^\/stems\/([0-9a-f]{64})\.flac$/.exec(url.pathname);
     if (match) {
       stemRequests.push(match[1]!);
       const hash = `sha256:${match[1]}`;
@@ -57,7 +67,7 @@ function server(
     }
     return new Response('not found', { status: 404 });
   }) as typeof fetch;
-  return { fetch: fetchImpl, stemRequests };
+  return { fetch: fetchImpl, stemRequests, stemPaths };
 }
 
 function player(attrs: Record<string, string>, srv = server()): SpitePlayer {
@@ -116,6 +126,7 @@ describe('<spite-player>', () => {
     const needed = new Set(el.performance!.events.map((e) => e.clipHash.slice(7)));
     expect(needed.size).toBeLessThan(Object.keys(placeholder.clips).length);
     expect(srv.stemRequests.sort()).toEqual([...needed].sort());
+    expect(srv.stemPaths.every((p) => p.endsWith('.flac'))).toBe(true);
     expect(part(el, 'status').textContent).toContain(`stems ${needed.size} / ${needed.size}`);
   });
 
@@ -124,6 +135,30 @@ describe('<spite-player>', () => {
     const el = player({ src: MANIFEST, seed: '42', bars: '16' }, server({ corrupt: hash }));
     const error = await next(el, 'error');
     expect(error.detail.messages.join('\n')).toMatch(new RegExp(`count.*${hash}.*does not match`));
+    expect(part<HTMLButtonElement>(el, 'play').disabled).toBe(true);
+  });
+
+  it('refuses a stem that matches its hash but is not FLAC', async () => {
+    const bytes = encodeWav16([new Float64Array(4800).fill(0.25)]);
+    const hash = `sha256:${await sha256Hex(bytes)}`;
+    const wavPiece: Manifest = {
+      specVersion: '0.1',
+      id: 'wav-piece',
+      title: 'WAV piece',
+      tempo: [{ bar: 0, bpm: 240, meter: [1, 4] }],
+      clips: { old: { hash, lengthBars: 1 } },
+      start: 's',
+      sections: [
+        { id: 's', lengthBars: 2, slots: [{ id: 'x', pool: [{ clip: 'old', weight: 1 }] }] },
+      ],
+    };
+    const el = player(
+      { src: '/wav.json', seed: '1', bars: '2' },
+      server({ manifests: { '/wav.json': wavPiece }, stems: new Map([[hash, bytes]]) }),
+    );
+    const error = await next(el, 'error');
+    expect(error.detail.messages.join('\n')).toMatch(new RegExp(`old.*${hash}.*not a FLAC stream`));
+    expect(part(el, 'status').textContent).toContain('not a FLAC stream');
     expect(part<HTMLButtonElement>(el, 'play').disabled).toBe(true);
   });
 
@@ -253,7 +288,7 @@ describe('<spite-player>', () => {
       accentEvery: 2,
       clickFrames: 240,
     } as const;
-    const bytes = synthesizeStemWav(recipe, 'tick');
+    const bytes = synthesizeStem(recipe, 'tick');
     const hash = `sha256:${await sha256Hex(bytes)}`;
     const tiny: Manifest = {
       specVersion: '0.1',

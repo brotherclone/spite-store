@@ -45,8 +45,9 @@ Unreadable or unparseable files are reported on stderr as `file  error: reason`.
 ## Stems
 
 Commands that render audio look up each clip's stem by content hash: `sha256:<hex>` is read from
-`<dir>/<hex>.wav`, where `<dir>` is `--stems` (default `.stems/` in the current directory). The file
-must hash to that value and be a 48 kHz mono or stereo WAV (16/24-bit PCM or float32). Only stems
+`<dir>/<hex>.flac`, where `<dir>` is `--stems` (default `.stems/` in the current directory). The file
+must hash to that value and be a 48 kHz mono or stereo FLAC stream (16- or 24-bit), which the engine
+decodes itself. A `.wav` file under the same hash is not read. Only stems
 the render actually uses are needed; every missing or invalid one is listed and the command exits 2.
 
 For the placeholder piece, `pnpm stems:placeholder` synthesizes the stems into `.stems/`. For a
@@ -120,9 +121,13 @@ Cuts a recorded piece's clips out of its source recordings and writes them to th
   `startBar + bars`, using the manifest's tempo map exactly as the renderer places bars. `bars` must
   be at least the clip's `lengthBars`. Anything after the body is the clip's tail.
 - Every manifest clip needs exactly one entry, and every entry must name a manifest clip.
-- Sources must be 48 kHz mono or stereo WAV (16/24-bit PCM or float32). Nothing is resampled or
-  converted. The stem keeps the source's sample bytes unchanged in a minimal WAV (just `fmt ` and
-  `data`), so DAW metadata never affects the hash.
+- Sources must be 48 kHz mono or stereo WAV in 16- or 24-bit integer PCM. Float32 sources are
+  refused (FLAC can't hold them): export them as 16- or 24-bit integer. Nothing is resampled or
+  converted.
+- Each stem is written as `<hex>.flac` by the engine's canonical FLAC encoder, at the source's depth.
+  It decodes to exactly the source's samples (pack checks this before writing), and the same samples
+  always encode to the same bytes, so DAW metadata, header form and the machine never affect the
+  hash.
 
 Pack then compares each clip's stem hash with the manifest. With `--update` it rewrites the
 manifest's clip hashes and the pack file's source hashes instead (formatted with Prettier when it is
@@ -170,8 +175,9 @@ pnpm exec spite fallback pieces/the-river-forgets-to-answer/manifest.json --seed
 
 Uploads every file the manifests reference to the public stem store (Vercel Blob): the stem of
 every clip in each catalogue, not only those a seed happens to use, and each manifest's fallback.
-Files are stored at `stems/<hex>.wav` (or `stems/<hex>.mp3`), named by content hash, publicly
-readable, with no random suffix and a one-year cache lifetime.
+Files are stored at `stems/<hex>.flac` (`audio/flac`) or, for an MP3 fallback, `stems/<hex>.mp3`
+(`audio/mpeg`), named by content hash, publicly readable, with no random suffix and a one-year cache
+lifetime.
 
 - Every file is read from the stems directory and checked against its hash **before** anything is
   uploaded. One missing or corrupt file means nothing is uploaded.

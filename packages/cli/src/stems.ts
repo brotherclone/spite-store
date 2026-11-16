@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { decodeWav, type Manifest, type Stem } from '@spite-store/engine';
+import { decodeFlac, type Manifest, type Stem } from '@spite-store/engine';
 
 export const DEFAULT_STEMS_DIR = '.stems';
 
@@ -12,7 +12,7 @@ export interface StemProblem {
 }
 
 /**
- * Loads `<dir>/<hex>.wav` for each hash, verifying the file's sha256 and decoding it. Every
+ * Loads `<dir>/<hex>.flac` for each hash, verifying the file's sha256 and decoding it. Every
  * problem is collected, so callers can report all missing or invalid stems at once.
  */
 export function loadStems(
@@ -26,7 +26,7 @@ export function loadStems(
     const clipIds = Object.keys(manifest.clips)
       .filter((id) => manifest.clips[id]!.hash === hash)
       .sort();
-    const file = join(dir, `${hash.slice('sha256:'.length)}.wav`);
+    const file = join(dir, `${hash.slice('sha256:'.length)}.flac`);
     let bytes: Buffer;
     try {
       bytes = readFileSync(file);
@@ -41,7 +41,7 @@ export function loadStems(
     try {
       stems.set(
         hash,
-        decodeWav(new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength), hash),
+        decodeFlac(new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength), hash),
       );
     } catch (error) {
       problems.push({ clipIds, hash, reason: (error as Error).message });

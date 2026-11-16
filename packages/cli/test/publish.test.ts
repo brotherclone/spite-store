@@ -18,7 +18,7 @@ const hex = (hash: string) => hash.slice('sha256:'.length);
 /** Copies a manifest's stems from .stems/ into `dir`. */
 function copyStems(manifest: string, dir: string) {
   for (const { hash } of Object.values(clipsOf(manifest))) {
-    copyFileSync(join(root, '.stems', `${hex(hash)}.wav`), join(dir, `${hex(hash)}.wav`));
+    copyFileSync(join(root, '.stems', `${hex(hash)}.flac`), join(dir, `${hex(hash)}.flac`));
   }
 }
 
@@ -34,7 +34,7 @@ function riverWithFallback(dir: string): string {
   };
   const manifest = JSON.parse(readFileSync(river, 'utf8'));
   for (const id of Object.keys(manifest.clips)) {
-    manifest.clips[id].hash = write(Buffer.from(`stand-in stem ${id}`), 'wav');
+    manifest.clips[id].hash = write(Buffer.from(`stand-in stem ${id}`), 'flac');
   }
   manifest.fallback = {
     hash: write(Buffer.from('stand-in fallback'), 'mp3'),
@@ -105,7 +105,7 @@ describe('spite publish: collection and local checks', () => {
     const partial = tempDir();
     copyStems(placeholder, partial);
     const [id, { hash }] = Object.entries(clipsOf(placeholder))[0]!;
-    const missing = join(partial, `${hex(hash)}.wav`);
+    const missing = join(partial, `${hex(hash)}.flac`);
     execFileSync('rm', [missing]);
     const r = await publish([placeholder, '--stems', partial], { store: async () => store });
     expect(r.code).toBe(2);
@@ -120,7 +120,7 @@ describe('spite publish: collection and local checks', () => {
     const corrupt = tempDir();
     copyStems(placeholder, corrupt);
     const [id, { hash }] = Object.entries(clipsOf(placeholder))[0]!;
-    writeFileSync(join(corrupt, `${hex(hash)}.wav`), 'garbage');
+    writeFileSync(join(corrupt, `${hex(hash)}.flac`), 'garbage');
     const r = await publish([placeholder, '--stems', corrupt], { store: async () => store });
     expect(r.code).toBe(2);
     expect(r.stderr).toMatch(new RegExp(`${id}.*${hash}.*does not match`));
@@ -180,8 +180,25 @@ describe('spite publish: uploads', () => {
     expect(r.stdout).toContain('25 uploaded, 0 already present');
     expect(files.size).toBe(25);
     const types = [...files.values()].map((f) => f.contentType);
-    expect(types.filter((t) => t === 'audio/wav')).toHaveLength(24);
+    expect(types.filter((t) => t === 'audio/flac')).toHaveLength(24);
+    expect([...files.keys()].filter((n) => n.endsWith('.flac'))).toHaveLength(24);
     expect(types.filter((t) => t === 'audio/mpeg')).toHaveLength(1);
+  });
+
+  it('re-publishing the River as FLAC leaves its WAV stems and fallback alone', async () => {
+    const dir = tempDir();
+    const manifest = riverWithFallback(dir);
+    const fallback = JSON.parse(readFileSync(manifest, 'utf8')).fallback.hash as string;
+    // The store as the WAV release left it: the River's old WAV stems and its fallback.
+    const oldWavs = Object.values(clipsOf(river)).map(({ hash }) => `${hex(hash)}.wav`);
+    const { store, files, puts } = memoryStore([...oldWavs, `${hex(fallback)}.mp3`]);
+    const before = new Map(oldWavs.map((n) => [n, files.get(n)]));
+    const r = await publish([manifest, '--stems', dir], { store: async () => store });
+    expect(r.code, r.stderr).toBe(0);
+    expect(r.stdout).toContain('24 uploaded, 1 already present');
+    expect(puts).toHaveLength(24);
+    expect(puts.every((n) => n.endsWith('.flac'))).toBe(true);
+    for (const [n, f] of before) expect(files.get(n)).toBe(f);
   });
 
   it('a second run uploads nothing', async () => {
@@ -194,7 +211,7 @@ describe('spite publish: uploads', () => {
   });
 
   it('never replaces a stored file', async () => {
-    const name = `${hex(Object.values(clipsOf(placeholder))[0]!.hash)}.wav`;
+    const name = `${hex(Object.values(clipsOf(placeholder))[0]!.hash)}.flac`;
     const { store, files, puts } = memoryStore([name]);
     const before = files.get(name);
     const r = await publish([placeholder, '--stems', stems], { store: async () => store });
@@ -234,7 +251,7 @@ describe('spite publish --check', () => {
   afterAll(() => new Promise<void>((resolve) => server.close(() => resolve())));
 
   const allPlaceholder = () =>
-    Object.values(clipsOf(placeholder)).map(({ hash }) => `${hex(hash)}.wav`);
+    Object.values(clipsOf(placeholder)).map(({ hash }) => `${hex(hash)}.flac`);
 
   it('exits 0 when every file is reachable', async () => {
     for (const name of allPlaceholder()) present.add(name);
@@ -246,7 +263,7 @@ describe('spite publish --check', () => {
   it('names an unreachable file and exits 1', async () => {
     for (const name of allPlaceholder()) present.add(name);
     const [id, { hash }] = Object.entries(clipsOf(placeholder))[0]!;
-    present.delete(`${hex(hash)}.wav`);
+    present.delete(`${hex(hash)}.flac`);
     const r = await spite('publish', '--check', base, placeholder);
     expect(r.code).toBe(1);
     expect(r.stderr).toContain(id);

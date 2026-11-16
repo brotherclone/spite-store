@@ -71,9 +71,9 @@ function server(options: { hold?: Iterable<string>; manifest?: Manifest } = {}) 
       typeof input === 'string' ? input : input instanceof URL ? input.href : input.url,
     );
     if (url.pathname === MANIFEST) return new Response(JSON.stringify(manifest));
-    const wav = /^\/stems\/([0-9a-f]{64})\.wav$/.exec(url.pathname);
-    if (wav) {
-      const hash = `sha256:${wav[1]}`;
+    const stem = /^\/stems\/([0-9a-f]{64})\.flac$/.exec(url.pathname);
+    if (stem) {
+      const hash = `sha256:${stem[1]}`;
       requests.push(hash);
       if (init?.signal) signals.push(init.signal);
       const outcome = (await waiting.get(hash)) ?? 'ok';

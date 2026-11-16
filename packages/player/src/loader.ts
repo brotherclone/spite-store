@@ -1,6 +1,6 @@
 import {
   checkManifest,
-  decodeWav,
+  decodeFlac,
   planRenderPartial,
   realizeTimeline,
   type Manifest,
@@ -75,7 +75,7 @@ export interface LoadOptions {
   manifest: Manifest;
   seed: string;
   bars: number;
-  /** Base URL that `<hex>.wav` is resolved against. */
+  /** Base URL that `<hex>.flac` is resolved against. */
   stemsBase: string;
   /** Decoded stems by hash, shared across loads of one player. */
   cache: Map<string, Stem>;
@@ -149,7 +149,7 @@ export function streamPerformance(options: StreamOptions): {
 
   const fetchOne = async (hash: string): Promise<void> => {
     const hex = hash.slice('sha256:'.length);
-    const url = new URL(`${hex}.wav`, options.stemsBase).href;
+    const url = new URL(`${hex}.flac`, options.stemsBase).href;
     const fail = (reason: string) => {
       if (aborted()) return;
       const message = `stem ${clipIds(hash)}  ${hash}  ${reason}`;
@@ -161,7 +161,7 @@ export function streamPerformance(options: StreamOptions): {
       if (!response.ok) return fail(`missing (HTTP ${response.status} for ${url})`);
       const bytes = await response.arrayBuffer();
       if ((await sha256Hex(bytes)) !== hex) return fail('content does not match its hash');
-      const stem = decodeWav(new Uint8Array(bytes), hash);
+      const stem = decodeFlac(new Uint8Array(bytes), hash);
       if (aborted()) return;
       cache.set(hash, stem);
       perf.stems.set(hash, stem);

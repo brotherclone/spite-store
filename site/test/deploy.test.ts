@@ -81,18 +81,21 @@ describe('scripts/deploy-check.mjs', () => {
       readFileSync(join(repo, 'pieces/the-river-forgets-to-answer/manifest.json'), 'utf8'),
     );
     const someRiverStem = (Object.values(river.clips)[0] as { hash: string }).hash.slice(7);
-    expect(requested).toContain(`${someRiverStem}.wav`);
+    expect(requested).toContain(`${someRiverStem}.flac`);
+    expect(requested.some((name: string) => name.endsWith('.wav'))).toBe(false);
   });
 
   it('fails naming a missing hash', async () => {
     const placeholder = JSON.parse(
       readFileSync(join(repo, 'pieces/placeholder/manifest.json'), 'utf8'),
     );
-    const hash = (Object.values(placeholder.clips)[0] as { hash: string }).hash;
-    missing = `${hash.slice(7)}.wav`;
+    const [id, clip] = Object.entries(placeholder.clips)[0] as [string, { hash: string }];
+    const hash = clip.hash;
+    missing = `${hash.slice(7)}.flac`;
     const r = await run();
     expect(r.code).toBe(1);
     expect(r.out).toContain(hash);
+    expect(r.out).toContain(id);
   });
 
   describe('engine pins', () => {
