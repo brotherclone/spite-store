@@ -7,7 +7,7 @@ Gives authors command-line tools to inspect and hear a piece: print a seed's tra
 ## Requirements
 
 ### Requirement: Stem resolution by content hash
-Commands that render audio SHALL look up each clip's stem by hash in a stems directory, given by `--stems <dir>` and defaulting to `.stems/` in the current working directory. The file for hash `sha256:<hex>` SHALL be `<dir>/<hex>.wav`. Before rendering, the command SHALL check every clip the render needs. If any are missing or invalid, it SHALL list each one's clip id and hash, render nothing, and exit 2.
+Commands that render audio SHALL look up each clip's stem by hash in a stems directory, given by `--stems <dir>` and defaulting to `.stems/` in the current working directory. The file for hash `sha256:<hex>` SHALL be `<dir>/<hex>.flac`. Before rendering, the command SHALL check every clip the render needs. If any are missing or invalid, it SHALL list each one's clip id and hash, render nothing, and exit 2.
 
 #### Scenario: Missing stem
 - **WHEN** `spite bounce` is run with a stems directory that lacks the file for one clip
@@ -16,6 +16,10 @@ Commands that render audio SHALL look up each clip's stem by hash in a stems dir
 #### Scenario: Default stems directory
 - **WHEN** `pnpm stems:placeholder` has been run and `spite bounce pieces/placeholder/manifest.json --seed 1 -o out.wav` is run from the repo root without `--stems`
 - **THEN** stems are read from `.stems/` and the command exits 0
+
+#### Scenario: Only a WAV stem present
+- **WHEN** the stems directory holds `<hex>.wav` but not `<hex>.flac` for a clip
+- **THEN** the command names that clip id and hash as missing, writes no output file, and exits 2
 
 ### Requirement: Manifest input checks
 `spite realize`, `spite bounce` and `spite audition` SHALL validate the manifest the same way `spite validate` does before doing anything else. They SHALL print validation errors in the same format and exit 1 on an invalid manifest, and exit 2 on usage errors or an unreadable or unparseable file. They SHALL then check the manifest's engine pin, and without `--ignore-pin` exit 1 on a mismatch, naming each differing format with its pinned and current values, and writing and playing nothing.

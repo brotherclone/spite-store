@@ -44,11 +44,11 @@ For a given (manifest, seed, bars), the player SHALL play exactly the trace and 
 - **THEN** the canonical JSON of its trace hashes to the same value as `spite realize pieces/placeholder/manifest.json --seed 42 --bars 16 --json`
 
 ### Requirement: Loading and stem verification
-After realizing the performance, the player SHALL fetch only the stems the performance uses, from `<stems><hex>.wav`, a few at a time, in the order the performance first uses them. It SHALL verify each stem's sha256 against its hash, decode it with the engine's WAV decoder (not the browser's audio decoder), and show progress as a count of stems loaded out of stems needed. Play SHALL be enabled once every stem sounding at the current position is loaded, and loading SHALL continue during playback. If the manifest cannot be fetched or is invalid, the player SHALL show an error naming the problem (the manifest's validation messages) and keep play disabled. If a stem is missing, fails its hash or cannot be decoded before playback has started, the player SHALL fire `error` naming each failing stem's clip ids and hash, and then either switch to fallback mode, when the manifest declares a fallback, or show that error and keep play disabled.
+After realizing the performance, the player SHALL fetch only the stems the performance uses, from `<stems><hex>.flac`, a few at a time, in the order the performance first uses them. It SHALL verify each stem's sha256 against its hash, decode it with the engine's FLAC decoder (not the browser's audio decoder), and show progress as a count of stems loaded out of stems needed. Play SHALL be enabled once every stem sounding at the current position is loaded, and loading SHALL continue during playback. If the manifest cannot be fetched or is invalid, the player SHALL show an error naming the problem (the manifest's validation messages) and keep play disabled. If a stem is missing, fails its hash or cannot be decoded before playback has started, the player SHALL fire `error` naming each failing stem's clip ids and hash, and then either switch to fallback mode, when the manifest declares a fallback, or show that error and keep play disabled.
 
 #### Scenario: Only needed stems are fetched
 - **WHEN** a performance uses 5 of a manifest's 7 clips
-- **THEN** exactly 5 stem requests are made and progress reaches "5 / 5"
+- **THEN** exactly 5 stem requests are made, each for a `.flac` URL, and progress reaches "5 / 5"
 
 #### Scenario: Hash mismatch
 - **WHEN** the server returns a file for hash `H` whose bytes do not hash to `H`, and the manifest has no fallback
@@ -57,6 +57,10 @@ After realizing the performance, the player SHALL fetch only the stems the perfo
 #### Scenario: Hash mismatch with a fallback
 - **WHEN** the server returns a file for hash `H` whose bytes do not hash to `H`, and the manifest declares a fallback
 - **THEN** `error` fires naming `H`, the player enters fallback mode, and its status names the failed stem
+
+#### Scenario: Undecodable stem
+- **WHEN** the server returns a file that hashes to `H` but is not a valid FLAC stem, and the manifest has no fallback
+- **THEN** the player shows an error naming `H`, its clip ids and the decoding problem, and play stays disabled
 
 #### Scenario: Invalid manifest
 - **WHEN** `src` points to a manifest with a dangling transition
@@ -69,6 +73,10 @@ After realizing the performance, the player SHALL fetch only the stems the perfo
 #### Scenario: Fetched in order of first use
 - **WHEN** the server records the order in which stem requests start, with one request allowed at a time
 - **THEN** the stems are requested in order of the first bar that uses each, ties broken by hash
+
+#### Scenario: Same samples in every browser from FLAC
+- **WHEN** the placeholder piece is played with seed `42` and 16 bars from FLAC stems in Chromium, Firefox and WebKit, and the output is captured
+- **THEN** each capture hashes to the placeholder's golden float32 snapshot for seed `42`
 
 ### Requirement: Playback
 Play SHALL start the performance from the current position, and pause SHALL stop it while keeping the position. Seeking SHALL move the position to the start of any bar, or to any point on the scrub bar, and playback SHALL continue from exactly that frame of the render. Pausing, resuming and seeking SHALL fade the output over 10 ms to avoid clicks. These fades happen after the worklet output and are outside the sample-identity promise. When the render ends, after the last tail, playback SHALL stop, the position SHALL rest at the end, and an `ended` event SHALL fire. The render SHALL NOT end while any stem is still loading under `late="wait"`. Pressing play at the end SHALL restart from the beginning.
@@ -127,11 +135,11 @@ For a valid manifest that declares a fallback, the player SHALL enter fallback m
 
 #### Scenario: Forced by attribute
 - **WHEN** a player with `fallback` loads a manifest that declares a fallback
-- **THEN** it enters fallback mode without fetching any `.wav` stem
+- **THEN** it enters fallback mode without fetching any stem
 
 #### Scenario: No AudioWorklet
 - **WHEN** the player loads a manifest with a fallback in a page where `AudioWorkletNode` is undefined
-- **THEN** it enters fallback mode without fetching any `.wav` stem
+- **THEN** it enters fallback mode without fetching any stem
 
 #### Scenario: Worklet fails at play
 - **WHEN** stems load, play is pressed, and loading the audio worklet module rejects
@@ -143,7 +151,7 @@ For a valid manifest that declares a fallback, the player SHALL enter fallback m
 
 #### Scenario: Mismatched pin
 - **WHEN** the player loads a manifest with a fallback that is pinned to trace 2 while the player's engine trace format is 1
-- **THEN** it enters fallback mode without fetching any `.wav` stem, and the status says the piece was made with a newer version of the player
+- **THEN** it enters fallback mode without fetching any stem, and the status says the piece was made with a newer version of the player
 
 #### Scenario: Unpinned manifest plays generatively
 - **WHEN** the player loads a manifest with a fallback and no `engine` field in a browser that supports generative playback
@@ -191,7 +199,7 @@ When a manifest's engine pin doesn't match the player's engine and the manifest 
 
 #### Scenario: No fallback to play
 - **WHEN** the player loads a manifest without a fallback that is pinned to trace 2 while the player's engine trace format is 1
-- **THEN** no `.wav` stem is fetched, the status names trace format 2 and 1, an `error` event fires, and play stays disabled
+- **THEN** no stem is fetched, the status names trace format 2 and 1, an `error` event fires, and play stays disabled
 
 #### Scenario: Forced fallback wins over the pin
 - **WHEN** a player with the `fallback` attribute loads a manifest with a fallback that is pinned to other formats
