@@ -5,7 +5,7 @@ import { serveDev } from './dev-serve.js';
 
 const repo = join(import.meta.dirname, '..');
 
-/** Development only: serves /pieces/** and /stems/<hex>.wav (from .stems/) by content hash. */
+/** Development only: serves /pieces/** and /stems/<hex>.flac (from .stems/) by content hash. */
 function piecesAndStems(): Plugin {
   return {
     name: 'spite-pieces-and-stems',

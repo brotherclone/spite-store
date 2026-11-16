@@ -81,31 +81,32 @@ seed, duration and stems give **identical samples** on every runtime.
 
 ```js
 import { readFileSync } from 'node:fs';
-import { decodeWav, renderWav } from '@spite-store/engine';
+import { decodeFlac, renderWav } from '@spite-store/engine';
 
 const manifest = JSON.parse(readFileSync('pieces/placeholder/manifest.json', 'utf8'));
 // Stems keyed by clip hash; run `pnpm stems:placeholder` first to create .stems/.
 const stems = new Map(
   Object.values(manifest.clips).map((c) => [
     c.hash,
-    decodeWav(readFileSync(`.stems/${c.hash.slice(7)}.wav`), c.hash),
+    decodeFlac(readFileSync(`.stems/${c.hash.slice(7)}.flac`), c.hash),
   ]),
 );
 const { wav, frames } = renderWav(manifest, 42, { durationBars: 16 }, stems);
 console.log(wav.byteLength, frames); // a 16-bit 48 kHz stereo WAV file
 ```
 
-| Export                                               | Purpose                                                                                    |
-| ---------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `renderWav(manifest, seed, { durationBars }, stems)` | Realize, render and encode in one call.                                                    |
-| `realizeForRender(manifest, seed, opts)`             | The trace plus `endBar`, the bar after the last realized bar.                              |
-| `planRender(manifest, events, endBar, stems)`        | Voices with start, choke and end frames, plus the total length. Plain JSON.                |
-| `renderBlock(plan, stems, state, frames)`            | Renders the next block. State is `{ v, frame }`, so any block size gives the same samples. |
-| `renderAll(plan, stems)`                             | One-pass render.                                                                           |
-| `barFrame(manifest, bar)`                            | Start frame of a bar (48 kHz).                                                             |
-| `decodeWav(bytes, name)` / `encodeWav16(channels)`   | Stem decoding (PCM 16/24, float32, 48 kHz, mono or stereo) and canonical 16-bit output.    |
-| `synthesizeStemWav(recipe)`                          | Placeholder stem synthesis (development only).                                             |
-| `RENDER_FORMAT`                                      | Version of the rendering rules (see below).                                                |
+| Export                                                   | Purpose                                                                                    |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `renderWav(manifest, seed, { durationBars }, stems)`     | Realize, render and encode in one call.                                                    |
+| `realizeForRender(manifest, seed, opts)`                 | The trace plus `endBar`, the bar after the last realized bar.                              |
+| `planRender(manifest, events, endBar, stems)`            | Voices with start, choke and end frames, plus the total length. Plain JSON.                |
+| `renderBlock(plan, stems, state, frames)`                | Renders the next block. State is `{ v, frame }`, so any block size gives the same samples. |
+| `renderAll(plan, stems)`                                 | One-pass render.                                                                           |
+| `barFrame(manifest, bar)`                                | Start frame of a bar (48 kHz).                                                             |
+| `decodeFlac(bytes, name)` / `encodeFlac(channels, bits)` | Stem decoding (FLAC, 16/24-bit, 48 kHz, mono or stereo) and the canonical stem encoder.    |
+| `decodeWav(bytes, name)` / `encodeWav16(channels)`       | Source WAV decoding (PCM 16/24, float32) and canonical 16-bit render output.               |
+| `synthesizeStem(recipe)`                                 | Placeholder stem synthesis as FLAC (development only).                                     |
+| `RENDER_FORMAT`                                          | Version of the rendering rules (see below).                                                |
 
 **Timing.** Within a tempo entry `{ bar: s, bpm, meter: [beats, unit] }`, bar `b` starts at
 `F(s) + round((b - s) * beats * (4/unit) * 60 * 48000 / bpm)`, rounding halves up. Errors never

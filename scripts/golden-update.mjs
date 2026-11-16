@@ -31,7 +31,7 @@ for (const [name, manifestPath] of tracePieces) {
 }
 
 // Golden audio: the placeholder piece rendered with stems synthesized in memory.
-const { RENDER_FORMAT, barFrame, decodeWav, renderWav, synthesizeStemWav } =
+const { RENDER_FORMAT, barFrame, decodeFlac, renderWav, synthesizeStem } =
   await import('@spite-store/engine');
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const placeholderPath = 'pieces/placeholder/manifest.json';
@@ -39,14 +39,14 @@ const placeholder = JSON.parse(readFileSync(join(root, placeholderPath), 'utf8')
 const recipes = JSON.parse(readFileSync(join(root, 'pieces/placeholder/recipes.json'), 'utf8'));
 const stems = new Map();
 for (const [id, recipe] of Object.entries(recipes)) {
-  const bytes = synthesizeStemWav(recipe, id);
+  const bytes = synthesizeStem(recipe, id);
   const hash = `sha256:${sha(bytes)}`;
   if (placeholder.clips[id].hash !== hash) {
     throw new Error(
       `placeholder stem ${id} does not match its manifest hash; run pnpm stems:placeholder`,
     );
   }
-  stems.set(hash, decodeWav(bytes, hash));
+  stems.set(hash, decodeFlac(bytes, hash));
 }
 for (const seed of [0, 42, 'spite-store']) {
   const durationBars = 16;

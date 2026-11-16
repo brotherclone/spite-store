@@ -2,12 +2,12 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
-  decodeWav,
+  decodeFlac,
   planRender,
   planRenderPartial,
   realizeForRender,
   renderAll,
-  synthesizeStemWav,
+  synthesizeStem,
   type ClipRecipe,
   type Manifest,
   type RenderPlan,
@@ -29,7 +29,7 @@ beforeAll(() => {
   stems = new Map();
   for (const [id, recipe] of Object.entries(recipes)) {
     const hash = manifest.clips[id]!.hash;
-    stems.set(hash, decodeWav(synthesizeStemWav(recipe, id), hash));
+    stems.set(hash, decodeFlac(synthesizeStem(recipe, id), hash));
   }
 });
 

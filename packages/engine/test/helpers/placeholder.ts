@@ -2,8 +2,8 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
-  decodeWav,
-  synthesizeStemWav,
+  decodeFlac,
+  synthesizeStem,
   type ClipRecipe,
   type Manifest,
   type Stem,
@@ -26,11 +26,11 @@ export function placeholderStems(): Map<string, Stem> {
   const { manifest, recipes } = loadPlaceholder();
   const stems = new Map<string, Stem>();
   for (const [id, recipe] of Object.entries(recipes)) {
-    const bytes = synthesizeStemWav(recipe, id);
+    const bytes = synthesizeStem(recipe, id);
     const hash = `sha256:${sha256(bytes)}`;
     if (manifest.clips[id]!.hash !== hash)
       throw new Error(`placeholder stem ${id} does not match its hash`);
-    stems.set(hash, decodeWav(bytes, hash));
+    stems.set(hash, decodeFlac(bytes, hash));
   }
   return stems;
 }

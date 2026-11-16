@@ -34,3 +34,10 @@ Initial draft.
   doesn't compare the pin with any engine, and realization and rendering ignore it.
 - `specVersion` stays `0.1`: every existing manifest validates and realizes exactly as before. A
   manifest that uses `engine` does not validate with a validator from before this addition.
+
+### 0.1 note: stems are FLAC
+
+- A clip's `hash` is still the sha256 of its stem file, but stem files are now FLAC (48 kHz, mono
+  or stereo, 16- or 24-bit), written by the engine's canonical encoder. They used to be WAV.
+- No schema change: every manifest validates exactly as before, and a seed renders the same samples
+  from the FLAC stems as from the WAV ones. Re-packed pieces get new clip hashes.

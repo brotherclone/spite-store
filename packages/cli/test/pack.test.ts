@@ -77,10 +77,10 @@ describe('spite pack', () => {
     expect(a1.hash).not.toBe(zero);
     expect(a1.hash).not.toBe(a2.hash);
     for (const file of readdirSync(stems)) {
-      expect(`${sha256(readFileSync(join(stems, file)))}.wav`).toBe(file);
+      expect(`${sha256(readFileSync(join(stems, file)))}.flac`).toBe(file);
     }
     expect(readdirSync(stems).sort()).toEqual(
-      [a1.hash, a2.hash].map((h: string) => `${h.slice(7)}.wav`).sort(),
+      [a1.hash, a2.hash].map((h: string) => `${h.slice(7)}.flac`).sort(),
     );
 
     const before = [readFileSync(manifestFile), readFileSync(packFile)];
@@ -138,6 +138,20 @@ describe('spite pack', () => {
     const files = readdirSync(x).sort();
     expect(readdirSync(y).sort()).toEqual(files);
     for (const f of files) expect(readFileSync(join(y, f))).toEqual(readFileSync(join(x, f)));
+  });
+
+  it('refuses a 32-bit float source without writing stems', async () => {
+    const wav = buildWav({
+      samples: new Uint8Array(new Float32Array(5 * BAR).fill(0.25).buffer),
+      bits: 32,
+      format: 3,
+    });
+    writeFileSync(join(sources, 'Take', 'A close.wav'), wav);
+    const stems = tempDir();
+    const r = await pack('--stems', stems, '--update');
+    expect(r.code).toBe(2);
+    expect(r.stderr).toMatch(/source "a": .*float.*16- or 24-bit integer/);
+    expect(readdirSync(stems)).toEqual([]);
   });
 
   it('needs --source', async () => {

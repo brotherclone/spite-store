@@ -1,4 +1,4 @@
-import { SAMPLE_RATE } from '@spite-store/engine';
+import { SAMPLE_RATE, decodeFlac, encodeFlac } from '@spite-store/engine';
 
 const FORMAT_PCM = 1;
 const FORMAT_FLOAT = 3;
@@ -6,7 +6,7 @@ const FORMAT_EXTENSIBLE = 0xfffe;
 
 /** Where a WAV file's sample bytes sit, and the format they are in. */
 export interface WavLayout {
-  /** 1 (integer PCM) or 3 (float), with any extensible header unwrapped. */
+  /** 1 (integer PCM), with any extensible header unwrapped. */
   format: number;
   channels: number;
   rate: number;
@@ -22,9 +22,9 @@ function fourcc(bytes: Uint8Array, offset: number): string {
 }
 
 /**
- * Reads a RIFF/WAVE file's format and the byte range of its samples, applying the same acceptance
- * rules as the renderer (48 kHz, 1 or 2 channels, 16/24-bit integer or 32-bit float). Throws an
- * Error naming the unsupported property otherwise.
+ * Reads a RIFF/WAVE source's format and the byte range of its samples. Accepts 48 kHz, 1 or 2
+ * channels, 16- or 24-bit integer PCM: what a FLAC stem can hold. Throws an Error naming the
+ * unsupported property otherwise.
  */
 export function readWavLayout(bytes: Uint8Array): WavLayout {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
@@ -64,9 +64,13 @@ export function readWavLayout(bytes: Uint8Array): WavLayout {
   if (fmt.channels !== 1 && fmt.channels !== 2) {
     throw new Error(`unsupported channel count ${fmt.channels} (expected 1 or 2)`);
   }
+  if (fmt.format === FORMAT_FLOAT) {
+    throw new Error(
+      `${fmt.bits}-bit float is not supported: export float sources as 16- or 24-bit integer`,
+    );
+  }
   const pcm = fmt.format === FORMAT_PCM && (fmt.bits === 16 || fmt.bits === 24);
-  const float = fmt.format === FORMAT_FLOAT && fmt.bits === 32;
-  if (!pcm && !float) {
+  if (!pcm) {
     throw new Error(`unsupported encoding (format ${fmt.format}, ${fmt.bits}-bit)`);
   }
   const blockAlign = (fmt.bits / 8) * fmt.channels;
@@ -78,44 +82,58 @@ export function readWavLayout(bytes: Uint8Array): WavLayout {
   };
 }
 
-/**
- * Writes frames `[start, end)` of a source as a canonical WAV: a plain 16-byte `fmt ` chunk and a
- * `data` chunk holding the source's sample bytes unchanged. No metadata is carried over, so the
- * result depends only on the audio.
- */
-export function sliceWav(
+/** Frames `[start, end)` of a source as one Int32Array of integer samples per channel. */
+export function readFrames(
   bytes: Uint8Array,
   layout: WavLayout,
   start: number,
   end: number,
-): Uint8Array {
+): Int32Array[] {
   if (!(Number.isInteger(start) && Number.isInteger(end) && 0 <= start && start <= end)) {
     throw new RangeError(`invalid frame range ${start}-${end}`);
   }
   if (end > layout.frames) {
     throw new RangeError(`frame range ends at ${end}, past the source's ${layout.frames} frames`);
   }
-  const dataBytes = (end - start) * layout.blockAlign;
-  const pad = dataBytes & 1;
-  const out = new Uint8Array(44 + dataBytes + pad);
-  const view = new DataView(out.buffer);
-  const ascii = (offset: number, text: string) => {
-    for (let i = 0; i < 4; i++) out[offset + i] = text.charCodeAt(i);
-  };
-  ascii(0, 'RIFF');
-  view.setUint32(4, 36 + dataBytes + pad, true);
-  ascii(8, 'WAVE');
-  ascii(12, 'fmt ');
-  view.setUint32(16, 16, true);
-  view.setUint16(20, layout.format, true);
-  view.setUint16(22, layout.channels, true);
-  view.setUint32(24, layout.rate, true);
-  view.setUint32(28, layout.rate * layout.blockAlign, true);
-  view.setUint16(32, layout.blockAlign, true);
-  view.setUint16(34, layout.bits, true);
-  ascii(36, 'data');
-  view.setUint32(40, dataBytes, true);
-  const from = layout.dataOffset + start * layout.blockAlign;
-  out.set(bytes.subarray(from, from + dataBytes), 44);
+  const frames = end - start;
+  const out = Array.from({ length: layout.channels }, () => new Int32Array(frames));
+  const bps = layout.bits / 8;
+  let p = layout.dataOffset + start * layout.blockAlign;
+  for (let f = 0; f < frames; f++) {
+    for (let c = 0; c < layout.channels; c++) {
+      out[c]![f] =
+        bps === 2
+          ? ((bytes[p]! | (bytes[p + 1]! << 8)) << 16) >> 16
+          : ((bytes[p]! | (bytes[p + 1]! << 8) | (bytes[p + 2]! << 16)) << 8) >> 8;
+      p += bps;
+    }
+  }
   return out;
+}
+
+/**
+ * Encodes frames `[start, end)` of a source as a canonical FLAC stem at the source's depth. The
+ * stem holds only the audio, so it depends on nothing else in the file (metadata, header form).
+ * The stem is decoded and checked against the source's samples before it is returned.
+ */
+export function sliceStem(
+  bytes: Uint8Array,
+  layout: WavLayout,
+  start: number,
+  end: number,
+): Uint8Array {
+  const samples = readFrames(bytes, layout, start, end);
+  const stem = encodeFlac(samples, layout.bits as 16 | 24);
+  const decoded = decodeFlac(stem, 'stem');
+  const divisor = layout.bits === 16 ? 32768 : 8388608;
+  for (let c = 0; c < samples.length; c++) {
+    const want = samples[c]!;
+    const got = decoded.channels[c]!;
+    for (let i = 0; i < want.length; i++) {
+      if (got[i]! * divisor !== want[i]) {
+        throw new Error(`FLAC round trip failed at frame ${start + i}, channel ${c}`);
+      }
+    }
+  }
+  return stem;
 }

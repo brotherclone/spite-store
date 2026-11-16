@@ -1,6 +1,5 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { decodeWav } from '@spite-store/engine';
 import { parse } from '../args.js';
 import {
   EXIT_INVALID,
@@ -19,7 +18,7 @@ import {
   type SourceAudio,
 } from '../pack.js';
 import { DEFAULT_STEMS_DIR } from '../stems.js';
-import { sliceWav } from '../wavslice.js';
+import { sliceStem } from '../wavslice.js';
 
 function fail(lines: readonly string[]): number {
   for (const line of lines) console.error(line);
@@ -87,15 +86,14 @@ export async function packCommand(argv: string[]): Promise<number> {
   mkdirSync(stemsDir, { recursive: true });
   const clipHashes = new Map<string, string>();
   for (const slice of slices) {
-    const bytes = sliceWav(
+    const bytes = sliceStem(
       sources.get(slice.source)!.bytes,
       layouts.get(slice.source)!,
       slice.start,
       slice.end,
     );
     const hash = sha256(bytes);
-    decodeWav(bytes, `${slice.clip} (${hash})`); // the renderer must accept every stem
-    writeFileSync(join(stemsDir, `${hash.slice('sha256:'.length)}.wav`), bytes);
+    writeFileSync(join(stemsDir, `${hash.slice('sha256:'.length)}.flac`), bytes);
     clipHashes.set(slice.clip, hash);
   }
   const written = new Set(clipHashes.values()).size;

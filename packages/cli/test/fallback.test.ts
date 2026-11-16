@@ -73,7 +73,7 @@ beforeAll(() => {
     { hash: string }
   >;
   for (const { hash } of Object.values(clips)) {
-    const name = `${hash.slice('sha256:'.length)}.wav`;
+    const name = `${hash.slice('sha256:'.length)}.flac`;
     copyFileSync(join(root, '.stems', name), join(stems, name));
   }
 });
