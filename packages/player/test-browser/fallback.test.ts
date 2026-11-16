@@ -39,17 +39,19 @@ function server(
   } = {},
 ) {
   const manifest = options.manifest ?? withFallback;
-  const wavRequests: string[] = [];
+  const stemRequests: string[] = [];
   const mp3Requests: string[] = [];
   const fetchImpl = (async (input: RequestInfo | URL) => {
     const url = new URL(
       typeof input === 'string' ? input : input instanceof URL ? input.href : input.url,
     );
     if (url.pathname === MANIFEST) return new Response(JSON.stringify(manifest));
-    const wav = /^\/stems\/([0-9a-f]{64})\.wav$/.exec(url.pathname);
-    if (wav) {
-      wavRequests.push(wav[1]!);
-      const hash = `sha256:${wav[1]}`;
+    // Any stem request counts (a WAV name too), so "no stem fetched" means none at all.
+    const stem = /^\/stems\/([0-9a-f]{64})\.(flac|wav)$/.exec(url.pathname);
+    if (stem) {
+      stemRequests.push(stem[1]!);
+      if (stem[2] !== 'flac') return new Response('not found', { status: 404 });
+      const hash = `sha256:${stem[1]}`;
       const bytes = stems.get(hash);
       if (!bytes) return new Response('not found', { status: 404 });
       return new Response(hash === options.corruptStem ? bytes.slice(0, -2) : bytes);
@@ -64,7 +66,7 @@ function server(
     }
     return new Response('not found', { status: 404 });
   }) as typeof fetch;
-  return { fetch: fetchImpl, wavRequests, mp3Requests };
+  return { fetch: fetchImpl, stemRequests, mp3Requests };
 }
 
 function player(attrs: Record<string, string>, srv = server()): SpitePlayer {
@@ -112,7 +114,7 @@ describe('when the player falls back', () => {
     expect(seen.map((e) => e.type)).toEqual(['fallback', 'ready']);
     expect(seen[0]!.detail).toEqual({ reason: 'forced', seed: 'spite-store', bars: 16 });
     expect(el.fallbackReason).toBe('forced');
-    expect(srv.wavRequests).toEqual([]);
+    expect(srv.stemRequests).toEqual([]);
     expect(srv.mp3Requests).toEqual([recordingHash.slice(7)]);
   });
 
@@ -125,7 +127,7 @@ describe('when the player falls back', () => {
       const fallback = once(el, 'fallback');
       await once(el, 'ready');
       expect((await fallback).detail.reason).toBe('unsupported');
-      expect(srv.wavRequests).toEqual([]);
+      expect(srv.stemRequests).toEqual([]);
     } finally {
       Object.defineProperty(globalThis, 'AudioWorkletNode', saved);
     }
@@ -312,7 +314,7 @@ describe('a manifest pinned to other engine formats', () => {
     expect(seen.map((e) => e.type)).toEqual(['fallback', 'ready']);
     expect(seen[0]!.detail).toEqual({ reason: 'engine', seed: 'spite-store', bars: 16 });
     expect(el.fallbackReason).toBe('engine');
-    expect(srv.wavRequests).toEqual([]);
+    expect(srv.stemRequests).toEqual([]);
     const status = part(el, 'status').textContent!;
     expect(status).toContain('a later version of the player');
     expect(status).toContain('trace format 99');
@@ -331,7 +333,7 @@ describe('a manifest pinned to other engine formats', () => {
     expect(part(el, 'status').textContent).toContain('trace format 99');
     expect(part(el, 'status').classList.contains('error')).toBe(true);
     expect(part<HTMLButtonElement>(el, 'play').disabled).toBe(true);
-    expect(srv.wavRequests).toEqual([]);
+    expect(srv.stemRequests).toEqual([]);
     expect(srv.mp3Requests).toEqual([]);
   });
 
@@ -352,6 +354,6 @@ describe('a manifest pinned to other engine formats', () => {
     await once(el, 'ready');
     expect(seen.map((e) => e.type)).toEqual(['ready']);
     expect(el.fallbackReason).toBeNull();
-    expect(srv.wavRequests.length).toBeGreaterThan(0);
+    expect(srv.stemRequests.length).toBeGreaterThan(0);
   });
 });

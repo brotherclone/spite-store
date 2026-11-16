@@ -21,7 +21,7 @@ The build is two self-contained files, `dist/index.js` (the element, engine incl
 | Attribute  | Meaning                                                                                                                  |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------ |
 | `src`      | Manifest URL (required).                                                                                                 |
-| `stems`    | Base URL for stems; the stem `sha256:<hex>` is fetched from `<stems><hex>.wav`. Default `stems/`.                        |
+| `stems`    | Base URL for stems; the stem `sha256:<hex>` is fetched from `<stems><hex>.flac`. Default `stems/`.                       |
 | `seed`     | Any string. Omit it and the player picks a pronounceable random seed (e.g. `tamirobe`), shows it and sets the attribute. |
 | `bars`     | Length in bars, a positive integer. Default 64. The piece may end earlier if its graph does.                             |
 | `fallback` | Boolean. Play the manifest's fixed recording instead of the generative performance (see below).                          |
@@ -61,8 +61,8 @@ sections), `--spite-pending` (clips whose stem is loading), `--spite-skipped` (c
 1. Fetch the manifest and check it with the engine's `checkManifest`.
 2. Realize the performance and plan the render on the main thread.
 3. Fetch only the stems the performance uses, in order of first use, verify each against its
-   sha256 (`crypto.subtle`), and decode it with the engine's WAV decoder. The browser's decoder is
-   never used. The render plan is redone as each stem arrives; frames before the first missing stem
+   sha256 (`crypto.subtle`), and decode it with the engine's FLAC decoder. The browser's decoder is
+   never used, so every browser gets exactly the same samples. The render plan is redone as each stem arrives; frames before the first missing stem
    are always exact.
 4. On the first play, create a 48 kHz `AudioContext` and an AudioWorklet that runs the engine
    renderer, 128 frames at a time.

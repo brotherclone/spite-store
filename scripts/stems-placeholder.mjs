@@ -1,11 +1,11 @@
-// Synthesizes the placeholder piece's stems into .stems/<sha256>.wav and checks every hash against
+// Synthesizes the placeholder piece's stems into .stems/<sha256>.flac and checks every hash against
 // pieces/placeholder/manifest.json. Run via `pnpm stems:placeholder` (add `-- --update` to rewrite
 // the manifest's hashes after a deliberate recipe change).
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import * as prettier from 'prettier';
-import { synthesizeStemWav } from '@spite-store/engine';
+import { synthesizeStem } from '@spite-store/engine';
 
 const root = join(import.meta.dirname, '..');
 const pieceDir = join(root, 'pieces/placeholder');
@@ -24,9 +24,9 @@ for (const id of Object.keys(recipes).sort()) {
     console.error(`recipe "${id}" has no clip in the manifest`);
     process.exit(1);
   }
-  const bytes = synthesizeStemWav(recipes[id], id);
+  const bytes = synthesizeStem(recipes[id], id);
   const hex = createHash('sha256').update(bytes).digest('hex');
-  writeFileSync(join(stemsDir, `${hex}.wav`), bytes);
+  writeFileSync(join(stemsDir, `${hex}.flac`), bytes);
   const actual = `sha256:${hex}`;
   if (clip.hash !== actual) {
     mismatches.push({ id, expected: clip.hash, actual });

@@ -10,36 +10,36 @@
   ],
   "clips": {
     "count": {
-      "hash": "sha256:8c4ee5edb412d61e59456364cccca08b412c58a9011862a38eaa40ac8ad63e7e",
+      "hash": "sha256:352667af67a03e5bbf102dea72d8a202279be2c0debf3548e6e3d5540d2fb814",
       "lengthBars": 1,
       "gain": 0.8
     },
     "pad-long": {
-      "hash": "sha256:7a6504376d08634c78064a42ec398a33dd41b170018aeb87f589b576b8d74657",
+      "hash": "sha256:dd95eef8a36bb539370d66d9b4a52b6b1ae284ea960c62e9686351e614a29317",
       "lengthBars": 2,
       "gain": 0.7
     },
     "pad-short": {
-      "hash": "sha256:d475e53d16f4903188de5116af6edcf2dc061d3de2805011de7cd7bbddafa856",
+      "hash": "sha256:0c92dae9307fbb1d04b6a7db90b40713444b165f4af34f28871102d55a9e4e4d",
       "lengthBars": 2,
       "gain": 0.6
     },
     "bass-a": {
-      "hash": "sha256:c70bdcbf1d1163cfd1ddad0912a3426f08b1ac0272c54e23d91ad9220202eaaf",
+      "hash": "sha256:80fda794e6b693a02a789ade8961e7fd6937dde790f504b13f4f06748db4721b",
       "lengthBars": 1
     },
     "bass-b": {
-      "hash": "sha256:006b2634a86e7bbf1e7caee3e7c441a8ac289e7f8306775301c9ef1b25c4a3c5",
+      "hash": "sha256:686aefea618ab3e733182d92c4b088e6bc338bcafa764e5eea055df8360c4e59",
       "lengthBars": 2,
       "excludes": ["hat-b"]
     },
     "hat-a": {
-      "hash": "sha256:32b11648985c08c3251b468379f71ab58b10a46f1032e0d2269a09b815e8caf5",
+      "hash": "sha256:2974ae9d2163689764a2742f1576eccf05b24ada2b97be37ccb101226718e784",
       "lengthBars": 1,
       "gain": 0.7
     },
     "hat-b": {
-      "hash": "sha256:4700673c86d8f9be4ce8a7762496c00a3312bfd6bfe8751c287aae2ac328ea63",
+      "hash": "sha256:80d79f6438c39080d3904abda70c7d86fcea9aa3fd58813a1ed3cb93c4e0c324",
       "lengthBars": 1,
       "gain": 0.7
     }

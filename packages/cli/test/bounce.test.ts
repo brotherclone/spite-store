@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { copyFileSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { root, sha256, spite, tempDir } from './helpers.js';
@@ -38,6 +38,38 @@ describe('spite bounce', () => {
     );
     expect(r.code).toBe(2);
     expect(r.stderr).toMatch(/stem count {2}sha256:[0-9a-f]{64} {2}missing/);
+    expect(existsSync(out)).toBe(false);
+  });
+
+  it('treats a stem present only as WAV as missing', async () => {
+    const stems = tempDir();
+    const clips = JSON.parse(readFileSync(join(root, piece), 'utf8')).clips as Record<
+      string,
+      { hash: string }
+    >;
+    for (const [id, { hash }] of Object.entries(clips)) {
+      const hex = hash.slice('sha256:'.length);
+      // Every stem as FLAC except `count`, which is there only under a .wav name.
+      copyFileSync(
+        join(root, '.stems', `${hex}.flac`),
+        join(stems, `${hex}.${id === 'count' ? 'wav' : 'flac'}`),
+      );
+    }
+    const out = join(tempDir(), 'out.wav');
+    const r = await spite(
+      'bounce',
+      piece,
+      '--seed',
+      '1',
+      '--bars',
+      '16',
+      '-o',
+      out,
+      '--stems',
+      stems,
+    );
+    expect(r.code).toBe(2);
+    expect(r.stderr).toMatch(/stem count {2}sha256:[0-9a-f]{64} {2}missing \(.*\.flac\)/);
     expect(existsSync(out)).toBe(false);
   });
 

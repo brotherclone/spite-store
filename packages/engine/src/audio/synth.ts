@@ -1,10 +1,11 @@
 /**
  * Placeholder stem synthesis. Uses only exactly specified arithmetic (integer phase, linear
- * envelopes, Philox noise), so a recipe produces byte-identical WAV files on every runtime.
+ * envelopes, Philox noise), so a recipe produces byte-identical FLAC stems on every runtime.
  * Meant for development and tests, not for music.
  */
 import { createRandom } from '../random.js';
-import { encodeWav16 } from './wav.js';
+import { encodeFlac } from './flac.js';
+import { quantize16 } from './wav.js';
 
 export type ClipRecipe =
   | {
@@ -125,7 +126,11 @@ export function synthesizeClip(recipe: ClipRecipe, name = 'clip'): Float64Array[
   });
 }
 
-/** Synthesizes a recipe and encodes it as a canonical 16-bit 48 kHz WAV file. */
-export function synthesizeStemWav(recipe: ClipRecipe, name = 'clip'): Uint8Array {
-  return encodeWav16(synthesizeClip(recipe, name));
+/**
+ * Synthesizes a recipe, quantizes it to 16 bits exactly as `encodeWav16` does, and encodes it as a
+ * canonical 16-bit 48 kHz FLAC stem.
+ */
+export function synthesizeStem(recipe: ClipRecipe, name = 'clip'): Uint8Array {
+  const channels = synthesizeClip(recipe, name).map((c) => Int32Array.from(c, quantize16));
+  return encodeFlac(channels, 16);
 }

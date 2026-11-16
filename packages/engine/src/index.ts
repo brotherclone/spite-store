@@ -36,6 +36,7 @@ export {
 } from './realize.js';
 export { CHOKE_FRAMES, SAMPLE_RATE, barFrame } from './audio/timing.js';
 export { decodeWav, encodeWav16, quantize16, type Stem } from './audio/wav.js';
+export { decodeFlac, encodeFlac } from './audio/flac.js';
 export {
   RENDER_FORMAT,
   createRenderState,
@@ -52,6 +53,6 @@ export {
   type RenderState,
   type Voice,
 } from './audio/render.js';
-export { synthesizeClip, synthesizeStemWav, type ClipRecipe } from './audio/synth.js';
+export { synthesizeClip, synthesizeStem, type ClipRecipe } from './audio/synth.js';
 export { realizeTimeline, type Visit } from './timeline.js';
 export { ENGINE_FORMATS, checkPin, describePinMismatch, type PinMismatch } from './pin.js';

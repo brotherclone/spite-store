@@ -3,7 +3,14 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createContext, runInContext } from 'node:vm';
 import { describe, expect, it } from 'vitest';
-import { decodeWav, synthesizeClip, synthesizeStemWav, type ClipRecipe } from '../../src/index.js';
+import {
+  decodeFlac,
+  decodeWav,
+  encodeWav16,
+  synthesizeClip,
+  synthesizeStem,
+  type ClipRecipe,
+} from '../../src/index.js';
 
 const recipes: Record<string, ClipRecipe> = {
   clicks: {
@@ -43,8 +50,10 @@ describe('placeholder synthesis', () => {
       expect(ch.every((v) => v >= -1 && v <= 1)).toBe(true);
       expect(ch.some((v) => v !== 0)).toBe(true);
     }
-    const stem = decodeWav(synthesizeStemWav(recipe, name), name);
+    const stem = decodeFlac(synthesizeStem(recipe, name), name);
     expect(stem.frames).toBe(recipe.frames);
+    // The same samples the WAV stem held before stems were FLAC.
+    expect(stem.channels).toEqual(decodeWav(encodeWav16(channels), name).channels);
   });
 
   it('shapes envelopes and tails as specified', () => {
@@ -63,10 +72,10 @@ describe('placeholder synthesis', () => {
     );
     for (const [name, recipe] of Object.entries(recipes)) {
       const bytes = runInContext(
-        `SpiteEngine.synthesizeStemWav(${JSON.stringify(recipe)}, ${JSON.stringify(name)})`,
+        `SpiteEngine.synthesizeStem(${JSON.stringify(recipe)}, ${JSON.stringify(name)})`,
         context,
       ) as Uint8Array;
-      expect(sha(bytes)).toBe(sha(synthesizeStemWav(recipe, name)));
+      expect(sha(bytes)).toBe(sha(synthesizeStem(recipe, name)));
     }
   });
 

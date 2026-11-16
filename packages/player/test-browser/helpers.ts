@@ -1,8 +1,8 @@
 import {
-  decodeWav,
+  decodeFlac,
   planRender,
   realizeForRender,
-  synthesizeStemWav,
+  synthesizeStem,
   type ClipRecipe,
   type Manifest,
   type RenderPlan,
@@ -25,7 +25,7 @@ export async function sha256Hex(bytes: BufferSource): Promise<string> {
 export async function placeholderStemFiles(): Promise<Map<string, Uint8Array>> {
   const files = new Map<string, Uint8Array>();
   for (const [id, recipe] of Object.entries(recipes)) {
-    const bytes = synthesizeStemWav(recipe, id);
+    const bytes = synthesizeStem(recipe, id);
     const hash = `sha256:${await sha256Hex(bytes)}`;
     if (hash !== placeholder.clips[id]!.hash)
       throw new Error(`synthesized stem ${id} has hash ${hash}`);
@@ -36,7 +36,8 @@ export async function placeholderStemFiles(): Promise<Map<string, Uint8Array>> {
 
 export async function placeholderStems(): Promise<Map<string, Stem>> {
   const stems = new Map<string, Stem>();
-  for (const [hash, bytes] of await placeholderStemFiles()) stems.set(hash, decodeWav(bytes, hash));
+  for (const [hash, bytes] of await placeholderStemFiles())
+    stems.set(hash, decodeFlac(bytes, hash));
   return stems;
 }
 

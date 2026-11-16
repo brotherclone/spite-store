@@ -5,15 +5,15 @@ import { sha256 } from './common.js';
 
 /** One file a set of manifests references: a stem or a fallback recording. */
 export interface PublishFile {
-  /** The stored name, `<hex>.wav` or `<hex>.mp3`. */
+  /** The stored name, `<hex>.flac` for a stem or `<hex>.mp3` for an MP3 fallback. */
   name: string;
   hash: string;
   /** Clip ids using it, plus `fallback` for a fallback recording. */
   owners: string[];
-  contentType: 'audio/wav' | 'audio/mpeg';
+  contentType: 'audio/flac' | 'audio/mpeg';
 }
 
-const EXTENSIONS = { 'audio/wav': 'wav', 'audio/mpeg': 'mp3' } as const;
+const EXTENSIONS = { 'audio/flac': 'flac', 'audio/mpeg': 'mp3' } as const;
 
 /** Every catalogued clip and fallback across the manifests, one entry per file, sorted by name. */
 export function collectFiles(manifests: readonly Manifest[]): PublishFile[] {
@@ -26,7 +26,7 @@ export function collectFiles(manifests: readonly Manifest[]): PublishFile[] {
   };
   for (const manifest of manifests) {
     for (const id of Object.keys(manifest.clips).sort()) {
-      add(manifest.clips[id]!.hash, id, 'audio/wav');
+      add(manifest.clips[id]!.hash, id, 'audio/flac');
     }
     if (manifest.fallback) add(manifest.fallback.hash, 'fallback', manifest.fallback.type);
   }

@@ -3,342 +3,342 @@
   "seed": "spite-store",
   "durationBars": 64,
   "traceFormat": 1,
-  "traceHash": "ccb943e9e7836f074134ba3a59bfd7854314fd52918765dfad5075c08938e424",
+  "traceHash": "c094785591bdfb24904c99fabd850af4f487ec99abf8d3a41e607658c9e816cd",
   "trace": [
     {
       "bar": 0,
       "beat": 0,
       "slot": "cello-close",
-      "clipHash": "sha256:0628c37746ae10a7ba2af8d92335fff865ce726bcebd73d6d75a2cf539ae48ee",
+      "clipHash": "sha256:db7fefda9280275c4bc119751b763389591a18a78072485d02f9798412e0e65b",
       "gain": 0.5
     },
     {
       "bar": 0,
       "beat": 0,
       "slot": "cello-room",
-      "clipHash": "sha256:fdb0d446bfe355d6d5b0f683131df1c32299d0f180cdcbe09dd385d159388bf1",
+      "clipHash": "sha256:d19d8fa14412c6ce0eadf9c7d22f5077039205404033b8779165c31ab96fe42b",
       "gain": 0.4
     },
     {
       "bar": 0,
       "beat": 0,
       "slot": "vio1-close",
-      "clipHash": "sha256:636249508a09247931e55fb6ec622bcf67dccb8ef376c2b6b2a8e0b6c1dec2ef",
+      "clipHash": "sha256:02b4becdf1f003526b6d1c95dc869d5a08ecebe7c7cd866cedba30dd9ad270df",
       "gain": 0.5
     },
     {
       "bar": 0,
       "beat": 0,
       "slot": "vio1-room",
-      "clipHash": "sha256:f98fb9501175477bb1766bb8181d25a628ddea0b47a5e3b35e6f426d531466b6",
+      "clipHash": "sha256:bda14569d54f040960be1ed6bef046093c94222e2e0d5d07b029522247a00e76",
       "gain": 0.4
     },
     {
       "bar": 0,
       "beat": 0,
       "slot": "vio2-close",
-      "clipHash": "sha256:62567399325ead776b510068de14bad4286aeeed8afb3e1b5622f07cdbfc30c6",
+      "clipHash": "sha256:86005cbaa1c3417619c3f40612816268ab138190750c6b8e2c1d9f22f739c51d",
       "gain": 0.5
     },
     {
       "bar": 0,
       "beat": 0,
       "slot": "viola-close",
-      "clipHash": "sha256:fe0d0ad8dc4c26d0e9af5b45cadbd1a7573b8f4cb5815b0e1937e46fa5e48698",
+      "clipHash": "sha256:eb170a9a3f441f7bd5f17b63de2b58ae69c75aec14cb8c54359806555313fb97",
       "gain": 0.5
     },
     {
       "bar": 0,
       "beat": 0,
       "slot": "viola-room",
-      "clipHash": "sha256:05b92b15c4141885012b330463c17d29065657b54752d773b472bc55e2579aa5",
+      "clipHash": "sha256:5431735fd59b0ee934392064991b988a8521772af8529bf0c7755975bb22ab39",
       "gain": 0.4
     },
     {
       "bar": 4,
       "beat": 0,
       "slot": "cello-close",
-      "clipHash": "sha256:264213aebed2d85a642ba080896821c8e78442da5c15149796e30982724530a2",
+      "clipHash": "sha256:6b9a6cc9deb9563b8474d57f4fe17fccbdc02071df6919262217fbeb92e4aaee",
       "gain": 0.5
     },
     {
       "bar": 4,
       "beat": 0,
       "slot": "cello-room",
-      "clipHash": "sha256:185b8ddc14c7e171c781a5f5e3455367e82e3d590a41167dee14c22aff4b9df8",
+      "clipHash": "sha256:642a74cbe052df1b7c0fcd3b057738a47ebd0f0eb1f175069ce830951cb63811",
       "gain": 0.4
     },
     {
       "bar": 4,
       "beat": 0,
       "slot": "vio1-room",
-      "clipHash": "sha256:355fa9d85dc36c8dec557c86a717fa91652174be43b9bddfb88c7c2a2498a5bc",
+      "clipHash": "sha256:c316c4e80d2dc1923b71a9d1fac4dad642bff6a640ed1d16a7c0eb4dc998d64d",
       "gain": 0.4
     },
     {
       "bar": 4,
       "beat": 0,
       "slot": "vio2-close",
-      "clipHash": "sha256:c7d08d5260e32ea0abfdca462da77ece67da53a4d1a61c2cd1b57085686a927e",
+      "clipHash": "sha256:51c275da51315fb14de5d3e176c38aa3d067cdac2763bd898594be58f9213da4",
       "gain": 0.5
     },
     {
       "bar": 4,
       "beat": 0,
       "slot": "vio2-room",
-      "clipHash": "sha256:8c02777c2fa20cde2e9eaf7fb781f48abf7f3f7897824ba69de43e8cbd2255b2",
+      "clipHash": "sha256:f207f8d0fad8ce2ff4af5413d3962e582821d756d417d8f4a556aea2493664e8",
       "gain": 0.4
     },
     {
       "bar": 4,
       "beat": 0,
       "slot": "viola-close",
-      "clipHash": "sha256:155c1fd93a770b0c5a6ff2e261f5885fd228d4054b252d318714383b3d9959e8",
+      "clipHash": "sha256:a01a49fff05c2185823e5cbaab5b716e305dad99fb2fa9f78787c1e66b09f3c9",
       "gain": 0.5
     },
     {
       "bar": 9,
       "beat": 0,
       "slot": "cello-close",
-      "clipHash": "sha256:481127661eb91b7c4e84186ad48b1b63ffc63cba20ace744b2a49ca727605f6e",
+      "clipHash": "sha256:0a60986b730aec275a1873e36cf6289ddf4d7b93faac63637da5cb138b42ce14",
       "gain": 0.5
     },
     {
       "bar": 9,
       "beat": 0,
       "slot": "vio1-close",
-      "clipHash": "sha256:cc3adb05b2234e881b6446c12a60468a1cbfa803b66248d5621ac098a59c2577",
+      "clipHash": "sha256:13b9d5ece5036e9732ecc758a6f42c1176eb612a0e2de8813cc91c1bc9ad5fb1",
       "gain": 0.5
     },
     {
       "bar": 9,
       "beat": 0,
       "slot": "vio1-room",
-      "clipHash": "sha256:3ddedcce501c22a38664d8a4e58b2c85ac13feccb410170abc006f37bfb33d6e",
+      "clipHash": "sha256:6201335912d065c23dcdfd05302c7e6cbf7fdea803fcf83d615c4d30e4219175",
       "gain": 0.4
     },
     {
       "bar": 9,
       "beat": 0,
       "slot": "vio2-close",
-      "clipHash": "sha256:cd27b470fc08afd424e07781f40ba48ba34bd97a8e0fcd3386459c631de51547",
+      "clipHash": "sha256:f43e58cf8d98bef36b975507c1f366641771b3de96ec1b1599b57a5144dcb5ed",
       "gain": 0.5
     },
     {
       "bar": 9,
       "beat": 0,
       "slot": "viola-close",
-      "clipHash": "sha256:fe0d0ad8dc4c26d0e9af5b45cadbd1a7573b8f4cb5815b0e1937e46fa5e48698",
+      "clipHash": "sha256:eb170a9a3f441f7bd5f17b63de2b58ae69c75aec14cb8c54359806555313fb97",
       "gain": 0.5
     },
     {
       "bar": 9,
       "beat": 0,
       "slot": "viola-room",
-      "clipHash": "sha256:05b92b15c4141885012b330463c17d29065657b54752d773b472bc55e2579aa5",
+      "clipHash": "sha256:5431735fd59b0ee934392064991b988a8521772af8529bf0c7755975bb22ab39",
       "gain": 0.4
     },
     {
       "bar": 14,
       "beat": 0,
       "slot": "cello-close",
-      "clipHash": "sha256:0628c37746ae10a7ba2af8d92335fff865ce726bcebd73d6d75a2cf539ae48ee",
+      "clipHash": "sha256:db7fefda9280275c4bc119751b763389591a18a78072485d02f9798412e0e65b",
       "gain": 0.5
     },
     {
       "bar": 14,
       "beat": 0,
       "slot": "cello-room",
-      "clipHash": "sha256:fdb0d446bfe355d6d5b0f683131df1c32299d0f180cdcbe09dd385d159388bf1",
+      "clipHash": "sha256:d19d8fa14412c6ce0eadf9c7d22f5077039205404033b8779165c31ab96fe42b",
       "gain": 0.4
     },
     {
       "bar": 14,
       "beat": 0,
       "slot": "vio2-close",
-      "clipHash": "sha256:c7d08d5260e32ea0abfdca462da77ece67da53a4d1a61c2cd1b57085686a927e",
+      "clipHash": "sha256:51c275da51315fb14de5d3e176c38aa3d067cdac2763bd898594be58f9213da4",
       "gain": 0.5
     },
     {
       "bar": 14,
       "beat": 0,
       "slot": "viola-close",
-      "clipHash": "sha256:d8da536416f99fc2093c86e91fce65f70f97242b4c067e314d1e2a3043297add",
+      "clipHash": "sha256:5b28039662bf61067526baca148cd37eecb7ba5b8e3c02e7f02e4e04fdb548d0",
       "gain": 0.5
     },
     {
       "bar": 14,
       "beat": 0,
       "slot": "viola-room",
-      "clipHash": "sha256:eb707eaaddf16faf72c1002fd4fe94712514191d4f6440c88facf7eacb265bdc",
+      "clipHash": "sha256:fb14f5ede3c75b75d601c09dbccd3c594750e75d7d035cdd4a4fbc92b5b6dd5a",
       "gain": 0.4
     },
     {
       "bar": 19,
       "beat": 0,
       "slot": "cello-close",
-      "clipHash": "sha256:481127661eb91b7c4e84186ad48b1b63ffc63cba20ace744b2a49ca727605f6e",
+      "clipHash": "sha256:0a60986b730aec275a1873e36cf6289ddf4d7b93faac63637da5cb138b42ce14",
       "gain": 0.5
     },
     {
       "bar": 19,
       "beat": 0,
       "slot": "vio1-close",
-      "clipHash": "sha256:2194f8bcb04fc51a0a2f88e4b1ebc7a53588333e007a6e5754a2336d4c879da3",
+      "clipHash": "sha256:69c8cd36894215541cf9dc2c583f85b2ca30ccaaf9871adc99d05c2233bb9733",
       "gain": 0.5
     },
     {
       "bar": 19,
       "beat": 0,
       "slot": "vio1-room",
-      "clipHash": "sha256:355fa9d85dc36c8dec557c86a717fa91652174be43b9bddfb88c7c2a2498a5bc",
+      "clipHash": "sha256:c316c4e80d2dc1923b71a9d1fac4dad642bff6a640ed1d16a7c0eb4dc998d64d",
       "gain": 0.4
     },
     {
       "bar": 19,
       "beat": 0,
       "slot": "vio2-close",
-      "clipHash": "sha256:62567399325ead776b510068de14bad4286aeeed8afb3e1b5622f07cdbfc30c6",
+      "clipHash": "sha256:86005cbaa1c3417619c3f40612816268ab138190750c6b8e2c1d9f22f739c51d",
       "gain": 0.5
     },
     {
       "bar": 19,
       "beat": 0,
       "slot": "viola-close",
-      "clipHash": "sha256:fe0d0ad8dc4c26d0e9af5b45cadbd1a7573b8f4cb5815b0e1937e46fa5e48698",
+      "clipHash": "sha256:eb170a9a3f441f7bd5f17b63de2b58ae69c75aec14cb8c54359806555313fb97",
       "gain": 0.5
     },
     {
       "bar": 19,
       "beat": 0,
       "slot": "viola-room",
-      "clipHash": "sha256:05b92b15c4141885012b330463c17d29065657b54752d773b472bc55e2579aa5",
+      "clipHash": "sha256:5431735fd59b0ee934392064991b988a8521772af8529bf0c7755975bb22ab39",
       "gain": 0.4
     },
     {
       "bar": 23,
       "beat": 0,
       "slot": "cello-close",
-      "clipHash": "sha256:0628c37746ae10a7ba2af8d92335fff865ce726bcebd73d6d75a2cf539ae48ee",
+      "clipHash": "sha256:db7fefda9280275c4bc119751b763389591a18a78072485d02f9798412e0e65b",
       "gain": 0.5
     },
     {
       "bar": 23,
       "beat": 0,
       "slot": "vio1-room",
-      "clipHash": "sha256:f98fb9501175477bb1766bb8181d25a628ddea0b47a5e3b35e6f426d531466b6",
+      "clipHash": "sha256:bda14569d54f040960be1ed6bef046093c94222e2e0d5d07b029522247a00e76",
       "gain": 0.4
     },
     {
       "bar": 23,
       "beat": 0,
       "slot": "vio2-room",
-      "clipHash": "sha256:cb956f055ad155736ec2c47c1bb5edf0b05d1d2d64ed15c182dfd11e5bbcc0cd",
+      "clipHash": "sha256:f65b751672fcc299459576e21ec998e0b9104cddee50912ecf01fb388a837078",
       "gain": 0.4
     },
     {
       "bar": 23,
       "beat": 0,
       "slot": "viola-close",
-      "clipHash": "sha256:d8da536416f99fc2093c86e91fce65f70f97242b4c067e314d1e2a3043297add",
+      "clipHash": "sha256:5b28039662bf61067526baca148cd37eecb7ba5b8e3c02e7f02e4e04fdb548d0",
       "gain": 0.5
     },
     {
       "bar": 23,
       "beat": 0,
       "slot": "viola-room",
-      "clipHash": "sha256:eb707eaaddf16faf72c1002fd4fe94712514191d4f6440c88facf7eacb265bdc",
+      "clipHash": "sha256:fb14f5ede3c75b75d601c09dbccd3c594750e75d7d035cdd4a4fbc92b5b6dd5a",
       "gain": 0.4
     },
     {
       "bar": 27,
       "beat": 0,
       "slot": "cello-close",
-      "clipHash": "sha256:481127661eb91b7c4e84186ad48b1b63ffc63cba20ace744b2a49ca727605f6e",
+      "clipHash": "sha256:0a60986b730aec275a1873e36cf6289ddf4d7b93faac63637da5cb138b42ce14",
       "gain": 0.5
     },
     {
       "bar": 27,
       "beat": 0,
       "slot": "cello-room",
-      "clipHash": "sha256:f72cd3c4231ca9c6aeea3f00ff6149e63c5065a518af1d8d81fb5329e6ecacd5",
+      "clipHash": "sha256:d4adac9d6582b5d746cb09ce769998f14613748f5c53e6f5d24b0a78c417da5b",
       "gain": 0.4
     },
     {
       "bar": 27,
       "beat": 0,
       "slot": "vio1-close",
-      "clipHash": "sha256:cc3adb05b2234e881b6446c12a60468a1cbfa803b66248d5621ac098a59c2577",
+      "clipHash": "sha256:13b9d5ece5036e9732ecc758a6f42c1176eb612a0e2de8813cc91c1bc9ad5fb1",
       "gain": 0.5
     },
     {
       "bar": 27,
       "beat": 0,
       "slot": "vio2-close",
-      "clipHash": "sha256:c7d08d5260e32ea0abfdca462da77ece67da53a4d1a61c2cd1b57085686a927e",
+      "clipHash": "sha256:51c275da51315fb14de5d3e176c38aa3d067cdac2763bd898594be58f9213da4",
       "gain": 0.5
     },
     {
       "bar": 27,
       "beat": 0,
       "slot": "vio2-room",
-      "clipHash": "sha256:8c02777c2fa20cde2e9eaf7fb781f48abf7f3f7897824ba69de43e8cbd2255b2",
+      "clipHash": "sha256:f207f8d0fad8ce2ff4af5413d3962e582821d756d417d8f4a556aea2493664e8",
       "gain": 0.4
     },
     {
       "bar": 27,
       "beat": 0,
       "slot": "viola-room",
-      "clipHash": "sha256:df702e4c1966b2194f6944c0377b76655cc7747686e22da174ac7efe0b6b8961",
+      "clipHash": "sha256:434c342621f10169a9729a2bd5ca78443cf6da840f6f4ec52f3da4ba6c98d9f3",
       "gain": 0.4
     },
     {
       "bar": 32,
       "beat": 0,
       "slot": "cello-close",
-      "clipHash": "sha256:264213aebed2d85a642ba080896821c8e78442da5c15149796e30982724530a2",
+      "clipHash": "sha256:6b9a6cc9deb9563b8474d57f4fe17fccbdc02071df6919262217fbeb92e4aaee",
       "gain": 0.5
     },
     {
       "bar": 32,
       "beat": 0,
       "slot": "vio1-close",
-      "clipHash": "sha256:636249508a09247931e55fb6ec622bcf67dccb8ef376c2b6b2a8e0b6c1dec2ef",
+      "clipHash": "sha256:02b4becdf1f003526b6d1c95dc869d5a08ecebe7c7cd866cedba30dd9ad270df",
       "gain": 0.5
     },
     {
       "bar": 32,
       "beat": 0,
       "slot": "vio1-room",
-      "clipHash": "sha256:f98fb9501175477bb1766bb8181d25a628ddea0b47a5e3b35e6f426d531466b6",
+      "clipHash": "sha256:bda14569d54f040960be1ed6bef046093c94222e2e0d5d07b029522247a00e76",
       "gain": 0.4
     },
     {
       "bar": 32,
       "beat": 0,
       "slot": "vio2-close",
-      "clipHash": "sha256:cd27b470fc08afd424e07781f40ba48ba34bd97a8e0fcd3386459c631de51547",
+      "clipHash": "sha256:f43e58cf8d98bef36b975507c1f366641771b3de96ec1b1599b57a5144dcb5ed",
       "gain": 0.5
     },
     {
       "bar": 32,
       "beat": 0,
       "slot": "vio2-room",
-      "clipHash": "sha256:cb956f055ad155736ec2c47c1bb5edf0b05d1d2d64ed15c182dfd11e5bbcc0cd",
+      "clipHash": "sha256:f65b751672fcc299459576e21ec998e0b9104cddee50912ecf01fb388a837078",
       "gain": 0.4
     },
     {
       "bar": 32,
       "beat": 0,
       "slot": "viola-close",
-      "clipHash": "sha256:155c1fd93a770b0c5a6ff2e261f5885fd228d4054b252d318714383b3d9959e8",
+      "clipHash": "sha256:a01a49fff05c2185823e5cbaab5b716e305dad99fb2fa9f78787c1e66b09f3c9",
       "gain": 0.5
     },
     {
       "bar": 32,
       "beat": 0,
       "slot": "viola-room",
-      "clipHash": "sha256:df702e4c1966b2194f6944c0377b76655cc7747686e22da174ac7efe0b6b8961",
+      "clipHash": "sha256:434c342621f10169a9729a2bd5ca78443cf6da840f6f4ec52f3da4ba6c98d9f3",
       "gain": 0.4
     }
   ]
