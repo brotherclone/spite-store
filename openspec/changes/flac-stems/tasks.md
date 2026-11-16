@@ -37,7 +37,7 @@
 - [x] 6.1 Measure the River before and after, for seeds `0`, `42` and `spite-store`: bytes of the stems first used at bar 0, bytes of all stems the seed uses, and total catalogue bytes, in WAV and FLAC. Also measure `decodeFlac` time per MB of FLAC in Chromium, Firefox and WebKit, on the River's largest stem. Record the results in a "Measured" section of `design.md`. Verify the catalogue is at most 60% of its WAV size ("Smaller than WAV on recorded audio"). If any browser decodes slower than about 50 ms per MB, note the Worker follow-up there.
 - [x] 6.2 Run the full suite: `pnpm test`, `pnpm test:browser`, `pnpm lint`, `pnpm typecheck` and `pnpm format:check`. Verify all pass and that the golden audio and float32 snapshots are unchanged since the start of the change.
 - [x] 6.3 Publish: `node --env-file=.env.local packages/cli/bin/spite.js publish pieces/*/manifest.json`. Verify the summary reports the new `.flac` stems uploaded, the fallbacks already present and no WAV touched, and that `spite publish --check pieces/*/manifest.json` exits 0.
-- [ ] 6.4 Verify on a preview deployment: in each browser, the River and the placeholder play, stem requests are `/stems/<hex>.flac` with `Content-Type: audio/flac`, and the first-wait bytes shown in DevTools match 6.1. Then merge into `develop` and `master`, and confirm production requests `.flac` stems.
+- [x] 6.4 Verify on a preview deployment: in each browser, the River and the placeholder play, stem requests are `/stems/<hex>.flac` with `Content-Type: audio/flac`, and the first-wait bytes shown in DevTools match 6.1. Then merge into `develop` and `master`, and confirm production requests `.flac` stems.
 
 ## Workflow follow-up
 
