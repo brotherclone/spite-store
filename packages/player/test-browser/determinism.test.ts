@@ -1,5 +1,12 @@
-import { barFrame } from '@spite-store/engine';
-import { beforeAll, describe, expect, it } from 'vitest';
+import {
+  barFrame,
+  planRender,
+  realizeForRender,
+  type Manifest,
+  type Slot,
+} from '@spite-store/engine';
+import { beforeAll, describe, expect, inject, it } from 'vitest';
+import panOverlay from '../../engine/test/fixtures/placeholder-panned.json';
 import golden0 from '../../../fixtures/golden/placeholder.float32.0.json';
 import golden42 from '../../../fixtures/golden/placeholder.float32.42.json';
 import goldenSpite from '../../../fixtures/golden/placeholder.float32.spite-store.json';
@@ -42,5 +49,29 @@ describe('worklet output equals the float32 goldens', () => {
     let first = -1;
     for (let i = 0; i < after.length && first < 0; i++) if (after[i] !== expected[i]) first = i;
     expect(first, 'first differing sample after the seek').toBe(-1);
+  });
+});
+
+declare module 'vitest' {
+  export interface ProvidedContext {
+    pannedFloat32Sha256: string;
+  }
+}
+
+describe('panned voices render the same as in Node', () => {
+  it('panned placeholder, seed 42, 16 bars', async () => {
+    const stems = await placeholderStems();
+    const piece = structuredClone(placeholder) as Manifest;
+    const overlay = panOverlay as Record<string, unknown>;
+    for (const section of piece.sections) {
+      for (const slot of section.slots ?? []) {
+        const pan = overlay[`${section.id}/${slot.id}`];
+        if (pan !== undefined) slot.pan = pan as Slot['pan'];
+      }
+    }
+    const { events, endBar } = realizeForRender(piece, 42, { durationBars: 16 });
+    expect(events.some((e) => e.pan !== undefined)).toBe(true);
+    const out = await renderThroughWorklet(planRender(piece, events, endBar, stems), stems);
+    expect(await sha256Hex(out)).toBe(inject('pannedFloat32Sha256'));
   });
 });

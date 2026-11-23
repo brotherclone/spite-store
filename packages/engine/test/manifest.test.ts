@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import minimal from '../../../schema/examples/valid/minimal.json' with { type: 'json' };
 import { checkManifest, type Manifest } from '../src/manifest.js';
@@ -172,5 +174,66 @@ describe('checkManifest: engine', () => {
 
   it('names the unknown field', () => {
     expect(withEngine({ trace: 1, render: 1, version: 'x' })[0]!.message).toContain('"version"');
+  });
+});
+
+describe('checkManifest: slot pan', () => {
+  const slotPointer = '/sections/1/slots/1';
+  const withPan = (pan: unknown) =>
+    errorsFor((m) => ((m.sections[1]!.slots![1]! as unknown as Record<string, unknown>).pan = pan));
+
+  it.each([-1, -0.6, 0, 0.25, 1, { min: -0.5, max: 0.25 }, { min: 0.3, max: 0.3 }])(
+    'accepts pan %j',
+    (pan) => {
+      expect(withPan(pan)).toEqual([]);
+    },
+  );
+
+  it.each([1.5, -1.01, 'left', null, { min: -2, max: 0 }, { min: 0 }, [0, 1]])(
+    'rejects pan %j at the slot',
+    (pan) => {
+      const errors = withPan(pan);
+      expect(errors.length).toBeGreaterThan(0);
+      for (const e of errors) expect(e.pointer).toBe(`${slotPointer}/pan`);
+    },
+  );
+
+  it('rejects an inverted range', () => {
+    expect(withPan({ min: 0.5, max: -0.5 })).toEqual([
+      { pointer: `${slotPointer}/pan`, message: expect.stringMatching(/min must not exceed max/) },
+    ]);
+  });
+
+  it('rejects an unknown range field', () => {
+    expect(withPan({ min: 0, max: 1, step: 0.1 })).toEqual([
+      { pointer: `${slotPointer}/pan`, message: expect.stringContaining('"step"') },
+    ]);
+  });
+});
+
+describe('checkManifest: unknown slot properties', () => {
+  it('names a misspelt slot field', () => {
+    const errors = errorsFor(
+      (m) => ((m.sections[1]!.slots![1]! as unknown as Record<string, unknown>).pann = 0.5),
+    );
+    expect(errors).toEqual([
+      { pointer: '/sections/1/slots/1', message: expect.stringContaining('"pann"') },
+    ]);
+  });
+
+  it('passes every example and piece manifest', () => {
+    const root = join(import.meta.dirname, '../../..');
+    const files = [
+      ...readdirSync(join(root, 'schema/examples/valid')).map((f) =>
+        join(root, 'schema/examples/valid', f),
+      ),
+      ...readdirSync(join(root, 'pieces'), { withFileTypes: true })
+        .filter((d) => d.isDirectory())
+        .map((d) => join(root, 'pieces', d.name, 'manifest.json')),
+    ];
+    expect(files.length).toBeGreaterThan(4);
+    for (const file of files) {
+      expect(checkManifest(JSON.parse(readFileSync(file, 'utf8'))), file).toEqual([]);
+    }
   });
 });
