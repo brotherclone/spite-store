@@ -79,14 +79,26 @@ pnpm exec spite pin pieces/<id>/manifest.json --update                     # onc
 node --env-file=.env.local packages/cli/bin/spite.js publish pieces/*/manifest.json
 ```
 
+When a piece is finished, freeze it instead of publishing it separately. `spite freeze` uploads
+what the store lacks, stores the manifest itself by hash, and appends a label (`v1`, `v2`, ...)
+to the piece's `versions.json`:
+
+```sh
+node --env-file=.env.local packages/cli/bin/spite.js freeze pieces/<id>/manifest.json   # after pin
+```
+
+Commit `versions.json`. From then on, links without `version` play the latest frozen version, and
+the URL the page writes names it (`&version=v1`), so a shared link keeps playing that performance
+after later edits and freezes.
+
 In development (`pnpm --filter site dev`) the page opens on the placeholder; production builds open
 on the piece named in `site/.env.production`. `spite publish` uploads only what the store lacks and
 never replaces a file. Commit the manifest
 change and push: every branch gets a preview deployment, and `master` is production. The build
-runs `spite publish --check`, so it fails rather than deploy a manifest whose stems aren't in the
-store, and it refuses a piece that isn't pinned to engine formats (`spite pin`), so a shared seed
+runs `spite publish --check` and `spite freeze --check`, so it fails rather than deploy a manifest
+or a recorded version whose files aren't in the store, and it refuses a piece that isn't pinned to engine formats (`spite pin`), so a shared seed
 link never quietly plays a different performance. See `packages/cli/README.md` for `fallback`,
-`publish` and `pin`.
+`publish`, `pin` and `freeze`.
 
 ## Browser tests
 

@@ -15,6 +15,8 @@ writeFileSync(join(dirs.stemsDir, `${hex}.wav`), Buffer.from('RIFF'));
 const mp3 = Buffer.from([0xff, 0xfb, 0x90, 0x64, 1, 2, 3]);
 writeFileSync(join(dirs.stemsDir, `${hex}.mp3`), mp3);
 writeFileSync(join(dirs.piecesDir, 'p', 'manifest.json'), '{"id":"p"}');
+const frozen = Buffer.from('{\n  "id": "p"\n}\n');
+writeFileSync(join(dirs.stemsDir, `${hex}.json`), frozen);
 writeFileSync(join(root, 'secret.txt'), 'nope');
 
 describe('development serving', () => {
@@ -46,6 +48,18 @@ describe('development serving', () => {
     const r = await serveDev(`/stems/${'cd'.repeat(32)}.mp3`, dirs);
     expect(r?.status).toBe(404);
     expect(String(r!.body)).toContain('spite fallback');
+  });
+
+  it('serves a frozen manifest by hash as application/json with its exact bytes', async () => {
+    const r = await serveDev(`/stems/${hex}.json`, dirs);
+    expect(r).toMatchObject({ status: 200, type: 'application/json' });
+    expect(Buffer.compare(r!.body as Buffer, frozen)).toBe(0);
+  });
+
+  it('answers a missing frozen manifest with 404 and the spite freeze hint', async () => {
+    const r = await serveDev(`/stems/${'cd'.repeat(32)}.json`, dirs);
+    expect(r?.status).toBe(404);
+    expect(String(r!.body)).toContain('spite freeze');
   });
 
   it('serves pieces and rejects path traversal', async () => {

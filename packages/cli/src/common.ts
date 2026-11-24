@@ -34,9 +34,18 @@ Commands:
       Check that the manifest is pinned to this engine's trace and render formats, or with
       --update, pin it to them. realize, bounce and audition refuse a manifest pinned to other
       formats unless given --ignore-pin; fallback always refuses.
+  freeze <manifest.json> [--label <label>] [--stems .stems]
+      Freeze the manifest as an immutable version: upload it as <hex>.json with every stem and
+      fallback the store lacks, then append it to versions.json beside the manifest, labelled
+      v1, v2, ... unless --label names one. Needs a current pin and BLOB_READ_WRITE_TOKEN.
+  freeze --check <base-url> <manifest.json...>
+      Upload nothing; check that every version in each piece's versions.json is in the store
+      with matching bytes, and that the files it references are reachable.
 
 Exit codes: 0 success, 1 invalid manifest, changed hashes, a missing or mismatched engine pin,
-unreachable or failed uploads, 2 usage error, unreadable file, missing stem, unusable source, missing ffmpeg or token.`;
+unreachable or failed uploads, an invalid versions.json, a taken or changed version label,
+2 usage error (including a malformed or reserved label), unreadable file, missing stem,
+unusable source, missing ffmpeg or token.`;
 
 /** Thrown for bad command-line usage; reported with the usage text and exit code 2. */
 export class UsageError extends Error {}
