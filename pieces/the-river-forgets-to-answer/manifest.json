@@ -1,7 +1,10 @@
 {
   "$schema": "../../schema/manifest.schema.json",
   "specVersion": "0.1",
-  "engine": { "trace": 1, "render": 1 },
+  "engine": {
+    "trace": 1,
+    "render": 1
+  },
   "id": "the-river-forgets-to-answer",
   "title": "The River Forgets to Answer",
   "tempo": [
@@ -132,6 +135,7 @@
           "id": "cello-close",
           "enter": 0.8,
           "gain": 0.5,
+          "pan": 0.6,
           "noRepeat": 1,
           "pool": [
             {
@@ -152,6 +156,7 @@
           "id": "cello-room",
           "enter": 0.5,
           "gain": 0.4,
+          "pan": 0.3,
           "pool": [
             {
               "clip": "cello-room-1",
@@ -171,6 +176,7 @@
           "id": "viola-close",
           "enter": 0.8,
           "gain": 0.5,
+          "pan": 0.25,
           "noRepeat": 1,
           "pool": [
             {
@@ -191,6 +197,7 @@
           "id": "viola-room",
           "enter": 0.5,
           "gain": 0.4,
+          "pan": 0.15,
           "pool": [
             {
               "clip": "viola-room-1",
@@ -210,6 +217,7 @@
           "id": "vio1-close",
           "enter": 0.8,
           "gain": 0.5,
+          "pan": -0.6,
           "noRepeat": 1,
           "pool": [
             {
@@ -230,6 +238,7 @@
           "id": "vio1-room",
           "enter": 0.5,
           "gain": 0.4,
+          "pan": -0.3,
           "pool": [
             {
               "clip": "vio1-room-1",
@@ -249,6 +258,7 @@
           "id": "vio2-close",
           "enter": 0.8,
           "gain": 0.5,
+          "pan": -0.25,
           "noRepeat": 1,
           "pool": [
             {
@@ -269,6 +279,7 @@
           "id": "vio2-room",
           "enter": 0.5,
           "gain": 0.4,
+          "pan": -0.15,
           "pool": [
             {
               "clip": "vio2-room-1",
@@ -308,7 +319,7 @@
     }
   ],
   "fallback": {
-    "hash": "sha256:aeb652888231657af3ffc1206dc5283428b97a5075d261767bf5587338660327",
+    "hash": "sha256:5cfeb08af505b24c27333f7b8314bd073ebb218b884438df02480e8371c5edc3",
     "type": "audio/mpeg",
     "seed": "spite-store",
     "bars": 64

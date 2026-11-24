@@ -18,12 +18,20 @@ export interface PoolEntry {
   weight: number;
 }
 
+/** A range a slot's pan is drawn from, once per pick. */
+export interface PanRange {
+  min: number;
+  max: number;
+}
+
 export interface Slot {
   id: string;
   enter?: number;
   gain?: number;
   noRepeat?: number;
   pool: PoolEntry[];
+  /** Stereo position: −1 hard left, 0 centre, 1 hard right, or a range drawn per pick. */
+  pan?: number | PanRange;
 }
 
 export interface Transition {
@@ -79,6 +87,8 @@ export interface Fallback {
 export const FALLBACK_TYPES = ['audio/mpeg'] as const;
 const FALLBACK_KEYS = ['bars', 'hash', 'seed', 'type'];
 const ENGINE_KEYS = ['render', 'trace'];
+const SLOT_KEYS = ['enter', 'gain', 'id', 'noRepeat', 'pan', 'pool'];
+const PAN_RANGE_KEYS = ['max', 'min'];
 
 /** A validation error: a JSON Pointer (RFC 6901) into the manifest and a message. */
 export interface ManifestError {
@@ -107,7 +117,26 @@ const isNumber = (v: Json): v is number => typeof v === 'number' && Number.isFin
 const isInt = (v: Json, min: number): v is number =>
   Number.isSafeInteger(v) && (v as number) >= min;
 const isUnit = (v: Json): v is number => isNumber(v) && v >= 0 && v <= 1;
+const isPan = (v: Json): v is number => isNumber(v) && v >= -1 && v <= 1;
 const isId = (v: Json): v is string => typeof v === 'string' && ID_PATTERN.test(v);
+
+/** A slot's `pan`: a position in [-1, 1], or a `{ min, max }` range within it with min ≤ max. */
+function checkPan(
+  pan: Json,
+  fail: (message: string, ...tokens: (string | number)[]) => void,
+  ...at: (string | number)[]
+): void {
+  if (isNumber(pan)) {
+    if (!isPan(pan)) fail('pan must be in [-1, 1]', ...at);
+    return;
+  }
+  if (!isObject(pan)) return fail('pan must be a number in [-1, 1] or { min, max }', ...at);
+  for (const key of Object.keys(pan).sort()) {
+    if (!PAN_RANGE_KEYS.includes(key)) fail(`unknown pan property "${key}"`, ...at);
+  }
+  if (!isPan(pan.min) || !isPan(pan.max)) return fail('pan min and max must be in [-1, 1]', ...at);
+  if (pan.min > pan.max) fail('pan min must not exceed max', ...at);
+}
 
 /**
  * Structural checks: enough of the schema that the engine can refuse malformed input on its own.
@@ -191,6 +220,9 @@ function checkStructure(m: Json): ManifestError[] {
         s.slots.forEach((slot, j) => {
           const at = ['sections', i, 'slots', j] as const;
           if (!isObject(slot)) return fail('slot must be an object', ...at);
+          for (const key of Object.keys(slot).sort()) {
+            if (!SLOT_KEYS.includes(key)) fail(`unknown slot property "${key}"`, ...at);
+          }
           if (!isId(slot.id)) fail('id must match ' + ID_PATTERN.source, ...at, 'id');
           if (slot.enter !== undefined && !isUnit(slot.enter))
             fail('enter must be in [0, 1]', ...at, 'enter');
@@ -199,6 +231,7 @@ function checkStructure(m: Json): ManifestError[] {
           if (slot.noRepeat !== undefined && !isInt(slot.noRepeat, 0)) {
             fail('noRepeat must be a non-negative integer', ...at, 'noRepeat');
           }
+          if (slot.pan !== undefined) checkPan(slot.pan, fail, ...at, 'pan');
           if (!Array.isArray(slot.pool) || slot.pool.length === 0) {
             fail('pool must be a non-empty array', ...at, 'pool');
           } else {

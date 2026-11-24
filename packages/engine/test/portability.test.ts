@@ -30,6 +30,20 @@ describe('portability', () => {
     }
   });
 
+  it('draws the same pans in a bare ECMAScript context', () => {
+    const bundle = readFileSync(join(pkgDir, 'dist/engine.iife.js'), 'utf8');
+    const manifest = loadExample('pan-range.json');
+    const context = createContext({});
+    runInContext(bundle, context);
+    const json = runInContext(
+      `JSON.stringify(SpiteEngine.realize(${JSON.stringify(manifest)}, "spite", { durationBars: 64 }))`,
+      context,
+    ) as string;
+    const events = realize(manifest, 'spite', { durationBars: 64 });
+    expect(events.some((e) => e.pan !== undefined)).toBe(true);
+    expect(traceHash(JSON.parse(json))).toBe(traceHash(events));
+  });
+
   it('renders identical samples in a bare ECMAScript context', () => {
     const bundle = readFileSync(join(pkgDir, 'dist/engine.iife.js'), 'utf8');
     const manifest = loadExample('minimal.json');

@@ -117,6 +117,7 @@
         "enter": { "$ref": "#/$defs/unit", "default": 1 },
         "gain": { "type": "number", "minimum": 0, "default": 1 },
         "noRepeat": { "type": "integer", "minimum": 0, "default": 0 },
+        "pan": { "$ref": "#/$defs/pan" },
         "pool": {
           "type": "array",
           "minItems": 1,
@@ -124,6 +125,19 @@
         }
       }
     },
+    "pan": {
+      "description": "Stereo position: -1 hard left, 0 centre, 1 hard right; or a { min, max } range drawn once per pick (min must not exceed max). A slot without pan is centred.",
+      "type": ["number", "object"],
+      "minimum": -1,
+      "maximum": 1,
+      "required": ["min", "max"],
+      "additionalProperties": false,
+      "properties": {
+        "min": { "$ref": "#/$defs/panPosition" },
+        "max": { "$ref": "#/$defs/panPosition" }
+      }
+    },
+    "panPosition": { "type": "number", "minimum": -1, "maximum": 1 },
     "poolEntry": {
       "type": "object",
       "required": ["clip", "weight"],

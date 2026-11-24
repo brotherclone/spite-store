@@ -18,6 +18,21 @@ interface Block {
 }
 
 /**
+ * A block's pan position after its clip id: `L`/`R` and the percentage (halves up), `C` when that
+ * rounds to 0, or nothing when the event has no pan.
+ */
+export function panLabel(pan: number | undefined): string {
+  if (pan === undefined) return '';
+  const percent = Math.floor(Math.abs(pan) * 100 + 0.5);
+  return percent === 0 ? 'C' : `${pan < 0 ? 'L' : 'R'}${percent}`;
+}
+
+const blockLabel = (clipId: string, pan: number | undefined): string => {
+  const position = panLabel(pan);
+  return position === '' ? clipId : `${clipId} · ${position}`;
+};
+
+/**
  * Lays out a performance as lanes: section visits, then one row per slot id (code-unit order).
  * A clip whose stem is still loading spans its clip length (its tail isn't known yet).
  */
@@ -48,7 +63,7 @@ export function layoutLanes(
         start: voice.start,
         bodyEnd: end,
         end,
-        label: clip.id,
+        label: blockLabel(clip.id, event.pan),
         state,
       };
     }
@@ -58,7 +73,7 @@ export function layoutLanes(
       start: voice.start,
       bodyEnd,
       end: voice.end,
-      label: clip.id,
+      label: blockLabel(clip.id, event.pan),
       state,
     };
   });

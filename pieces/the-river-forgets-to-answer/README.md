@@ -48,8 +48,22 @@ re-exported or a range changes, rerun with `--update`, then `pnpm golden:update`
 | close | 0.8   | 0.5  | 1        |
 | room  | 0.5   | 0.4  | –        |
 
-Peak check (seeds 0–19 bounced for 64 bars): loudest peak −3.4 dBFS, no clipped samples.
-Everything is mono and centred, because the manifest schema has no panning yet.
+The quartet sits in classic seating as seen from the audience, with each room mic nearer the
+centre than its close mic because it carries the hall rather than the instrument. The positions
+were chosen by ear from three widths of seed `spite-store`:
+
+| Instrument | close `pan` | room `pan` |
+| ---------- | ----------- | ---------- |
+| Violin 1   | −0.6        | −0.3       |
+| Violin 2   | −0.25       | −0.15      |
+| Viola      | +0.25       | +0.15      |
+| Cello      | +0.6        | +0.3       |
+
+The pan law is a linear balance (unity at the centre, the far side turned down), so placing the
+quartet made it about 1.6 dB quieter overall than the centred release. The gains are unchanged.
+Placement changed no clip choice: every seed picks the same takes as before.
+
+Peak check (seeds 0–19 bounced for 64 bars): loudest peak −4.5 dBFS, no clipped samples.
 
 ## Fallback and publishing
 

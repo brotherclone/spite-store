@@ -12,6 +12,8 @@ export interface TraceEvent {
   slot: string;
   clipHash: string;
   gain: number;
+  /** Stereo position, present only when the slot declares `pan`. */
+  pan?: number;
 }
 
 export interface RealizeOptions {
@@ -76,7 +78,9 @@ export function canonicalTrace(events: readonly TraceEvent[]): string {
       .map(
         (e) =>
           `{"bar":${JSON.stringify(e.bar)},"beat":${JSON.stringify(e.beat)},"slot":${JSON.stringify(e.slot)},` +
-          `"clipHash":${JSON.stringify(e.clipHash)},"gain":${JSON.stringify(e.gain)}}`,
+          `"clipHash":${JSON.stringify(e.clipHash)},"gain":${JSON.stringify(e.gain)}` +
+          (e.pan === undefined ? '' : `,"pan":${JSON.stringify(e.pan)}`) +
+          '}',
       )
       .join(',') +
     ']'
@@ -266,13 +270,21 @@ function pickClip(
   if (slotState.history.length > index.maxNoRepeat) {
     slotState.history.splice(0, slotState.history.length - index.maxNoRepeat);
   }
-  return {
+  const event: TraceEvent = {
     bar,
     beat: 0,
     slot: slot.id,
     clipHash: clip.hash,
     gain: (clip.gain ?? 1) * (slot.gain ?? 1),
   };
+  if (typeof slot.pan === 'number') {
+    event.pan = slot.pan;
+  } else if (slot.pan !== undefined) {
+    // A drawn pan has its own path, so it moves no other decision: 101 steps across the range.
+    const k = random.draw(['v', state.visit!.ordinal, 's', slot.id, 'pan', pickOrdinal]) % 101;
+    event.pan = slot.pan.min + ((slot.pan.max - slot.pan.min) * k) / 100;
+  }
+  return event;
 }
 
 /**

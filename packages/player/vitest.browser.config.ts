@@ -2,7 +2,17 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { decodeFlac, synthesizeStem, type ClipRecipe } from '@spite-store/engine';
+import {
+  decodeFlac,
+  planRender,
+  realizeForRender,
+  renderAll,
+  synthesizeStem,
+  type ClipRecipe,
+  type Manifest,
+  type Slot,
+  type Stem,
+} from '@spite-store/engine';
 import { playwright } from '@vitest/browser-playwright';
 import { defineConfig } from 'vitest/config';
 
@@ -39,6 +49,40 @@ for (const [id, recipe] of Object.entries(recipes)) {
   );
 }
 
+// The sha256 of the panned placeholder's float32 render (seed 42, 16 bars), computed in Node, so
+// the browser tests can check each worklet renders panned voices identically.
+const panOverlay = JSON.parse(
+  readFileSync(join(repo, 'packages/engine/test/fixtures/placeholder-panned.json'), 'utf8'),
+) as Record<string, unknown>;
+const pannedPiece = JSON.parse(
+  readFileSync(join(repo, 'pieces/placeholder/manifest.json'), 'utf8'),
+) as Manifest;
+for (const section of pannedPiece.sections) {
+  for (const slot of section.slots ?? []) {
+    const pan = panOverlay[`${section.id}/${slot.id}`];
+    if (pan !== undefined) slot.pan = pan as Slot['pan'];
+  }
+}
+const nodeStems = new Map<string, Stem>(
+  Object.entries(recipes).map(([id, recipe]) => [
+    pannedPiece.clips[id]!.hash,
+    decodeFlac(synthesizeStem(recipe, id), id),
+  ]),
+);
+const pannedRender = realizeForRender(pannedPiece, 42, { durationBars: 16 });
+const pannedOut = renderAll(
+  planRender(pannedPiece, pannedRender.events, pannedRender.endBar, nodeStems),
+  nodeStems,
+);
+const pannedF32 = new Float32Array(pannedOut.left.length * 2);
+for (let i = 0; i < pannedOut.left.length; i++) {
+  pannedF32[2 * i] = pannedOut.left[i]!;
+  pannedF32[2 * i + 1] = pannedOut.right[i]!;
+}
+const pannedFloat32Sha256 = createHash('sha256')
+  .update(new Uint8Array(pannedF32.buffer))
+  .digest('hex');
+
 // Real-browser tests for the player: `pnpm test:browser` (needs `pnpm exec playwright install
 // chromium firefox webkit` once). Kept out of `pnpm test`.
 export default defineConfig({
@@ -46,7 +90,7 @@ export default defineConfig({
   test: {
     include: ['test-browser/**/*.test.ts'],
     testTimeout: 60_000,
-    provide: { cliTraceSha256, decodedStemSha256 },
+    provide: { cliTraceSha256, decodedStemSha256, pannedFloat32Sha256 },
     browser: {
       enabled: true,
       headless: true,

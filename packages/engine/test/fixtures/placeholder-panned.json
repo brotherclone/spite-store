@@ -1,0 +1,11 @@
+{
+  "$comment": "Pans applied to pieces/placeholder/manifest.json for the panned render tests, keyed by section/slot. pad-long, pad-short and hat-b are stereo stems.",
+  "intro/click": -0.3,
+  "intro/pad": 0.7,
+  "groove/click": -0.3,
+  "groove/bass": 0.4,
+  "groove/hat": -1,
+  "groove/pad": { "min": -0.6, "max": 0.6 },
+  "break/pad": 1,
+  "break/hat": { "min": -1, "max": 1 }
+}

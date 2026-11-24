@@ -17,7 +17,7 @@ console.log(checkManifest(manifest)); // [] when valid
 
 // One shot: every event for 64 bars.
 const trace = realize(manifest, 'spite-store', { durationBars: 64 });
-console.log(trace.slice(0, 3)); // [{ bar, beat, slot, clipHash, gain }, ...]
+console.log(trace.slice(0, 3)); // [{ bar, beat, slot, clipHash, gain, pan? }, ...]
 
 // Chunked: the state is plain JSON and can be stored or sent between chunks.
 let state = createState(manifest, 'spite-store', { durationBars: 64 });
@@ -60,10 +60,16 @@ These paths are the stable contract. Changing them changes what every shared see
 | Next section | `["v", visitOrdinal, "next"]`                           |
 | Slot entry   | `["v", visitOrdinal, "s", slotId, "enter"]`             |
 | Clip pick    | `["v", visitOrdinal, "s", slotId, "pick", pickOrdinal]` |
+| Drawn pan    | `["v", visitOrdinal, "s", slotId, "pan", pickOrdinal]`  |
 
 `visitOrdinal` counts section visits from 0. `pickOrdinal` counts pick attempts within the slot's
 visit, including one-bar rests forced by exclusions. Weighted choices sum their candidates in
 code-unit order of id (transition targets, clip ids), so declaration order never matters.
+
+A slot whose `pan` is a range `{ min, max }` draws a position only when a pick chooses a clip:
+`min + (max - min) * (draw % 101) / 100`. Its path is its own, so adding, changing or removing a
+range moves no other decision. A fixed `pan` is copied without a draw. An event carries `pan` only
+when its slot declares one, so traces of manifests without `pan` are unchanged.
 
 ## `traceFormat` bump policy
 
@@ -119,8 +125,13 @@ section boundaries, and after the last bar every tail rings out. Exclusions cons
 only, so a tail may briefly overlap a clip it excludes. Because slot ids act as voices, reusing a
 slot id in two sections for unrelated material makes them choke each other.
 
-**Mixing.** Each output frame is the sum, in trace order, of `sample * gain * fade` over the voices
-sounding at that frame, computed in doubles. Output clips to [-1, 1] and rounds `x * 32767` half up,
+**Mixing.** Each output frame is the sum, in trace order, of `sample * (gain * fade * side)` over
+the voices sounding at that frame, computed in doubles. `side` is the balance pan law: for pan
+`p`, the left side is `1 - p` when `p > 0` and 1 otherwise, the right side `1 + p` when `p < 0` and
+1 otherwise. At the centre both sides are exactly 1, so an unpanned voice renders the same samples
+as before pan existed. A mono stem feeds both sides; a stereo stem's channels are scaled separately,
+so a stereo stem panned hard to one side loses its other channel. A voice gets quieter as it moves
+outwards (about 3 dB at hard pan); raise its `gain` to compensate. Output clips to [-1, 1] and rounds `x * 32767` half up,
 with no dither.
 
 ### `RENDER_FORMAT` bump policy
