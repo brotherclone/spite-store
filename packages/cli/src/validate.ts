@@ -6,7 +6,7 @@ import { describeSchemaError } from './messages.js';
 const require = createRequire(import.meta.url);
 const schema: object = require('@spite-store/schema/manifest.schema.json');
 
-const ajv = new Ajv2020({ allErrors: true, strict: true });
+const ajv = new Ajv2020({ allErrors: true, strict: true, allowUnionTypes: true });
 const validateSchema = ajv.compile(schema);
 
 /**

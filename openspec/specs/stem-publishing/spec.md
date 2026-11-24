@@ -6,7 +6,7 @@ Moves a piece's stems and fallback recording from an author's local stems direct
 ## Requirements
 
 ### Requirement: Publish command
-`spite publish <manifest...> [--stems <dir>]` SHALL upload, for every named manifest, the file of every clip in its catalogue and of its fallback (if any), stored by name `<hex>.wav` (or `<hex>.mp3` for an MP3 fallback). It SHALL upload every catalogued clip, not only those some seed uses. It SHALL read files from the stems directory, which defaults to `.stems/`.
+`spite publish <manifest...> [--stems <dir>]` SHALL upload, for every named manifest, the file of every clip in its catalogue and of its fallback (if any), stored by name `<hex>.flac` (or `<hex>.mp3` for an MP3 fallback). It SHALL upload every catalogued clip, not only those some seed uses. It SHALL read files from the stems directory, which defaults to `.stems/`.
 
 #### Scenario: First publish
 - **WHEN** `spite publish pieces/the-river-forgets-to-answer/manifest.json` is run with all 24 stems and the fallback in `.stems/` and an empty store
@@ -15,6 +15,10 @@ Moves a piece's stems and fallback recording from an author's local stems direct
 #### Scenario: Several manifests share a stem
 - **WHEN** two named manifests reference the same hash
 - **THEN** that file is uploaded at most once
+
+#### Scenario: Re-publishing after the switch to FLAC
+- **WHEN** the River has been re-packed as FLAC and is published to a store that holds its earlier WAV stems and its fallback
+- **THEN** 24 `.flac` files are uploaded, the fallback is reported as already present, and no `.wav` file is uploaded or removed
 
 ### Requirement: Publishing is idempotent
 `spite publish` SHALL NOT upload a file that the store already holds under the same name. Running it twice in a row SHALL upload nothing the second time. A stored file SHALL never be replaced or deleted.
@@ -42,11 +46,11 @@ Before uploading anything, `spite publish` SHALL check that every referenced fil
 - **THEN** it prints a message naming `BLOB_READ_WRITE_TOKEN`, uploads nothing, and exits 2
 
 ### Requirement: Stored files are public and immutable
-Every uploaded file SHALL be publicly readable at a stable URL `<store-base>/stems/<name>`, with no random suffix, the content type `audio/wav` or `audio/mpeg`, and a cache lifetime of one year.
+Every uploaded file SHALL be publicly readable at a stable URL `<store-base>/stems/<name>`, with no random suffix, the content type `audio/flac` for a stem or `audio/mpeg` for an MP3 fallback, and a cache lifetime of one year.
 
 #### Scenario: Uploaded file is readable
-- **WHEN** a stem has been published and `<store-base>/stems/<hex>.wav` is fetched without credentials
-- **THEN** the response is 200, its `Content-Type` is `audio/wav`, and its body hashes to `<hex>`
+- **WHEN** a stem has been published and `<store-base>/stems/<hex>.flac` is fetched without credentials
+- **THEN** the response is 200, its `Content-Type` is `audio/flac`, and its body hashes to `<hex>`
 
 ### Requirement: Reachability check
 `spite publish --check <base-url> <manifest...>` SHALL upload nothing and need no credential. For each referenced file it SHALL request `<base-url><name>`. It SHALL list every file that is not reachable with a 2xx status, by clip id and hash, and exit 1 if there are any, or 0 if all are reachable. A network error SHALL count as unreachable.

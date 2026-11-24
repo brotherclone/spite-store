@@ -41,3 +41,13 @@ Initial draft.
   or stereo, 16- or 24-bit), written by the engine's canonical encoder. They used to be WAV.
 - No schema change: every manifest validates exactly as before, and a seed renders the same samples
   from the FLAC stems as from the WAV ones. Re-packed pieces get new clip hashes.
+
+### 0.1 addition: `pan`
+
+- Optional slot `pan`: the slot's stereo position, either a number in [-1, 1] (−1 hard left, 0
+  centre, 1 hard right) or a range `{ min, max }` within [-1, 1], from which each pick draws a
+  position. `min` must not exceed `max`; the engine checks this, since the JSON Schema can't.
+- A slot without `pan` is centred, exactly as before.
+- `specVersion` stays `0.1`: every existing manifest validates, realizes and renders exactly as
+  before. A manifest that uses `pan` does not validate with a validator from before this addition.
+- The engine's own check now also rejects unknown slot properties, as the JSON Schema always has.

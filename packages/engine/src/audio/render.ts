@@ -13,6 +13,8 @@ export interface Voice {
   slot: string;
   clipHash: string;
   gain: number;
+  /** The event's stereo position; absent means centre. */
+  pan?: number;
   start: number;
   choke: number | null;
   end: number;
@@ -93,6 +95,7 @@ export function planRenderPartial(
       slot: event.slot,
       clipHash: event.clipHash,
       gain: event.gain,
+      ...(event.pan === undefined ? {} : { pan: event.pan }),
       start,
       choke: null,
       end: stem ? start + stem.frames : start,
@@ -161,6 +164,11 @@ export function renderBlockInto(
     if (!stem) throw new Error(`Missing stem ${voice.clipHash}`);
     const l = stem.channels[0]!;
     const r = stem.channels[1] ?? l;
+    // Balance law: the near side stays at 1 and the far side falls linearly. At the centre both
+    // factors are exactly 1, and g * 1 === g, so unpanned voices render the same samples as before.
+    const pan = voice.pan ?? 0;
+    const panL = pan > 0 ? 1 - pan : 1;
+    const panR = pan < 0 ? 1 + pan : 1;
     for (let f = a; f < b; f++) {
       const i = f - voice.start;
       const fade =
@@ -169,8 +177,8 @@ export function renderBlockInto(
           : (voice.choke + CHOKE_FRAMES - f) / CHOKE_FRAMES;
       const g = voice.gain * fade;
       const j = f - from;
-      left[j] = left[j]! + l[i]! * g;
-      right[j] = right[j]! + r[i]! * g;
+      left[j] = left[j]! + l[i]! * (g * panL);
+      right[j] = right[j]! + r[i]! * (g * panR);
     }
   }
   return { v: RENDER_STATE_VERSION, frame: from + length };

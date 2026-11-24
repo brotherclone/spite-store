@@ -67,6 +67,13 @@ sections), `--spite-pending` (clips whose stem is loading), `--spite-skipped` (c
 4. On the first play, create a 48 kHz `AudioContext` and an AudioWorklet that runs the engine
    renderer, 128 frames at a time.
 
+## Stereo placement
+
+A slot with `pan` in the manifest is placed by the engine's renderer; the player does no pan
+processing of its own, so a panned piece is sample-identical in every browser. In the lanes, each
+clip from a panned slot is labelled with its position after the clip id: `vio1-close-2 · L60`,
+`… · R25`, or `… · C` at the centre. Clips from slots without `pan` are labelled as before.
+
 ## Streaming and late stems
 
 Stems are fetched four at a time in the order the performance first uses them, so play is enabled

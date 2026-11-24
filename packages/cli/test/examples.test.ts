@@ -3,6 +3,7 @@ import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import { Ajv2020 } from 'ajv/dist/2020.js';
 import { describe, expect, it } from 'vitest';
+import { checkManifest, type Manifest } from '@spite-store/engine';
 import { validateManifest } from '../src/validate.js';
 
 const examples = join(import.meta.dirname, '../../../schema/examples');
@@ -15,7 +16,9 @@ describe('manifest schema', () => {
     const schema: object = createRequire(import.meta.url)(
       '@spite-store/schema/manifest.schema.json',
     );
-    expect(() => new Ajv2020({ strict: true, allErrors: true }).compile(schema)).not.toThrow();
+    expect(() =>
+      new Ajv2020({ strict: true, allErrors: true, allowUnionTypes: true }).compile(schema),
+    ).not.toThrow();
   });
 });
 
@@ -128,5 +131,30 @@ describe('engine pin messages', () => {
 
   it('accepts a pin to formats this engine does not have', () => {
     expect(errorsFor({ trace: 7, render: 3 })).toEqual([]);
+  });
+});
+
+describe('pan examples: engine and schema agree', () => {
+  const schema: object = createRequire(import.meta.url)('@spite-store/schema/manifest.schema.json');
+  const ajv = new Ajv2020({ strict: true, allErrors: true, allowUnionTypes: true });
+  const schemaAccepts = ajv.compile(schema);
+  const pan = (dir: string) => list(dir).filter((f) => f.startsWith('pan-'));
+
+  it('has the pan examples', () => {
+    expect(pan('valid')).toEqual(['pan-fixed.json', 'pan-range.json']);
+    expect(pan('invalid')).toHaveLength(3);
+  });
+
+  it.each(pan('valid'))('valid/%s passes the schema and the engine', (file) => {
+    expect(schemaAccepts(read('valid', file))).toBe(true);
+    expect(checkManifest(read('valid', file) as Manifest)).toEqual([]);
+  });
+
+  it.each(pan('invalid'))('invalid/%s fails the engine check on its own', (file) => {
+    expect(checkManifest(read('invalid', file) as Manifest)).not.toEqual([]);
+  });
+
+  it.each(pan('invalid'))('invalid/%s fails the schema unless only the engine can tell', (file) => {
+    expect(schemaAccepts(read('invalid', file))).toBe(file === 'pan-inverted-range.json');
   });
 });
