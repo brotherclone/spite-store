@@ -5,7 +5,7 @@ import type { AddressInfo } from 'node:net';
 import { join } from 'node:path';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { publishCommand } from '../src/commands/publish.js';
-import type { StemStore } from '../src/publish.js';
+import { manifestFile, uploadMissing, type StemStore } from '../src/publish.js';
 import { root, sha256, spite, tempDir } from './helpers.js';
 
 const river = join(root, 'pieces/the-river-forgets-to-answer/manifest.json');
@@ -231,6 +231,23 @@ describe('spite publish: uploads', () => {
     const r = await publish([placeholder, '--stems', stems], { store: async () => failing });
     expect(r.code).toBe(1);
     expect(r.stderr).toContain('network down');
+  });
+});
+
+describe('frozen manifests in the store', () => {
+  it('stores a manifest as <hex>.json with content type application/json, never replaced', async () => {
+    const bytes = new Uint8Array(readFileSync(placeholder));
+    const file = manifestFile(bytes);
+    expect(file.name).toBe(`${sha256(bytes)}.json`);
+    expect(file.hash).toBe(`sha256:${sha256(bytes)}`);
+    expect(file.owners).toEqual(['manifest']);
+    const { store, files, puts } = memoryStore();
+    const first = await uploadMissing([file], new Map([[file.name, bytes]]), store);
+    expect(first.map((r) => r.status)).toEqual(['uploaded']);
+    expect(files.get(file.name)).toEqual({ bytes, contentType: 'application/json' });
+    const second = await uploadMissing([file], new Map([[file.name, bytes]]), store);
+    expect(second.map((r) => r.status)).toEqual(['present']);
+    expect(puts).toEqual([file.name]);
   });
 });
 

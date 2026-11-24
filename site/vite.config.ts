@@ -1,11 +1,15 @@
 import { readFileSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { defineConfig, type Plugin } from 'vite';
 import { serveDev } from './dev-serve.js';
 
 const repo = join(import.meta.dirname, '..');
 
-/** Development only: serves /pieces/** and /stems/<hex>.flac (from .stems/) by content hash. */
+/**
+ * Development only: serves /pieces/** and /stems/<hex>.{flac,mp3,json} (from .stems/) by content
+ * hash. SPITE_PIECES_DIR and SPITE_STEMS_DIR point it at other directories, e.g. a scratch copy of
+ * a piece frozen for a check.
+ */
 function piecesAndStems(): Plugin {
   return {
     name: 'spite-pieces-and-stems',
@@ -14,8 +18,8 @@ function piecesAndStems(): Plugin {
       server.middlewares.use((req, res, next) => {
         const pathname = new URL(req.url ?? '/', 'http://localhost').pathname;
         serveDev(pathname, {
-          piecesDir: join(repo, 'pieces'),
-          stemsDir: join(repo, '.stems'),
+          piecesDir: resolve(repo, process.env.SPITE_PIECES_DIR ?? 'pieces'),
+          stemsDir: resolve(repo, process.env.SPITE_STEMS_DIR ?? '.stems'),
         }).then((response) => {
           if (!response) return next();
           res.statusCode = response.status;
@@ -28,8 +32,9 @@ function piecesAndStems(): Plugin {
 }
 
 /**
- * Production only: emits every `pieces/<id>/manifest.json`, byte for byte, at the same path. Pack
- * files, READMEs and audio stay out of the build; stems come from the stem store (see vercel.json).
+ * Production only: emits every `pieces/<id>/manifest.json`, and its `versions.json` when the piece
+ * has been frozen, byte for byte, at the same paths. Pack files, READMEs and audio stay out of the
+ * build; stems and frozen manifests come from the stem store (see vercel.json).
  */
 export function pieceManifests(piecesDir = join(repo, 'pieces')): Plugin {
   return {
@@ -48,6 +53,13 @@ export function pieceManifests(piecesDir = join(repo, 'pieces')): Plugin {
           continue;
         }
         this.emitFile({ type: 'asset', fileName: `pieces/${id}/manifest.json`, source });
+        let versions: Buffer;
+        try {
+          versions = readFileSync(join(piecesDir, id, 'versions.json'));
+        } catch {
+          continue;
+        }
+        this.emitFile({ type: 'asset', fileName: `pieces/${id}/versions.json`, source: versions });
       }
     },
   };

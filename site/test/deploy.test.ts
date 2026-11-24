@@ -1,4 +1,5 @@
 import { execFile } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { createServer, type Server } from 'node:http';
@@ -34,6 +35,25 @@ describe('vercel.json', () => {
     expect(Number(/max-age=(\d+)/.exec(cacheFor('/pieces/(.*)'))?.[1])).toBeLessThanOrEqual(300);
   });
 
+  /** The Cache-Control a path gets: the value of the first header rule whose source matches it. */
+  const cacheOf = (path: string) => {
+    const rule = vercel.headers.find((h) => new RegExp(`^${h.source}$`).test(path));
+    return rule?.headers.find((h) => h.key === 'Cache-Control')?.value ?? '';
+  };
+  const maxAge = (value: string) => Number(/max-age=(\d+)/.exec(value)?.[1]);
+
+  it('caches frozen manifests for a year, immutably, under the stems rule', () => {
+    const value = cacheOf(`/stems/${'ab'.repeat(32)}.json`);
+    expect(value).toContain('immutable');
+    expect(maxAge(value)).toBeGreaterThanOrEqual(31_536_000);
+  });
+
+  it('caches version lists for at most five minutes, under the pieces rule', () => {
+    const value = cacheOf('/pieces/the-river-forgets-to-answer/versions.json');
+    expect(value).not.toBe('');
+    expect(maxAge(value)).toBeLessThanOrEqual(300);
+  });
+
   it('checks the stem store before building the site, and serves site/dist', () => {
     const steps = vercel.buildCommand.split('&&').map((s) => s.trim());
     expect(steps.indexOf('node scripts/deploy-check.mjs')).toBeGreaterThan(-1);
@@ -49,13 +69,15 @@ describe('scripts/deploy-check.mjs', () => {
   let base: string;
   let missing: string | null = null;
   const requested: string[] = [];
+  /** Files served with their bytes; anything else answers 200 with no body unless `missing`. */
+  const served = new Map<string, string>();
 
   beforeAll(async () => {
     server = createServer((req, res) => {
       const name = (req.url ?? '').replace(/^\/stems\//, '');
       requested.push(name);
       res.statusCode = name === missing ? 404 : 200;
-      res.end();
+      res.end(name !== missing && req.method === 'GET' ? served.get(name) : undefined);
     });
     await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
     base = `http://127.0.0.1:${(server.address() as AddressInfo).port}/stems/`;
@@ -159,6 +181,60 @@ describe('scripts/deploy-check.mjs', () => {
       const r = await run({ SPITE_PIECES_DIR: pieces({ a: { engine: { trace: 1, render: 1 } } }) });
       expect(r.code, r.out).toBe(0);
       expect(r.out).not.toContain('warning');
+    });
+  });
+
+  describe('frozen versions', () => {
+    const placeholder = readFileSync(join(repo, 'pieces/placeholder/manifest.json'), 'utf8');
+    const hexOf = (text: string) => createHash('sha256').update(text).digest('hex');
+
+    /** A temporary pieces directory with the placeholder frozen as v1, and its version list. */
+    function frozenPieces(versions?: (hex: string) => string) {
+      const dir = mkdtempSync(join(tmpdir(), 'spite-pieces-'));
+      mkdirSync(join(dir, 'placeholder'));
+      writeFileSync(join(dir, 'placeholder', 'manifest.json'), placeholder);
+      const hex = hexOf(placeholder);
+      const list =
+        versions?.(hex) ??
+        JSON.stringify({ versions: [{ hash: `sha256:${hex}`, label: 'v1' }] }, null, 2) + '\n';
+      writeFileSync(join(dir, 'placeholder', 'versions.json'), list);
+      return { dir, hex };
+    }
+
+    it('passes for a frozen piece whose files are all in the store', async () => {
+      missing = null;
+      const { dir, hex } = frozenPieces();
+      served.set(`${hex}.json`, placeholder);
+      const r = await run({ SPITE_PIECES_DIR: dir });
+      expect(r.code, r.out).toBe(0);
+      expect(r.out).toContain(`reachable  placeholder  v1  sha256:${hex}`);
+    });
+
+    it('fails on a recorded version missing from the store, naming piece, label and hash', async () => {
+      const { dir, hex } = frozenPieces();
+      missing = `${hex}.json`;
+      const r = await run({ SPITE_PIECES_DIR: dir });
+      expect(r.code).toBe(1);
+      expect(r.out).toContain(`placeholder  v1  sha256:${hex}`);
+      missing = null;
+    });
+
+    it('fails on a version list that repeats a label, naming the file and the label', async () => {
+      missing = null;
+      const other = `sha256:${'a'.repeat(64)}`;
+      const { dir, hex } = frozenPieces((h) =>
+        JSON.stringify({
+          versions: [
+            { hash: `sha256:${h}`, label: 'v1' },
+            { hash: other, label: 'v1' },
+          ],
+        }),
+      );
+      served.set(`${hex}.json`, placeholder);
+      const r = await run({ SPITE_PIECES_DIR: dir });
+      expect(r.code).toBe(1);
+      expect(r.out).toContain(join(dir, 'placeholder', 'versions.json'));
+      expect(r.out).toContain('repeated label "v1"');
     });
   });
 });

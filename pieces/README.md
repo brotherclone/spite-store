@@ -22,3 +22,19 @@ refuses an unpinned piece. When an engine change bumps `TRACE_FORMAT` or `RENDER
 pinned piece is stranded: the site plays its fallback recording instead (or nothing, without one),
 and the build log lists each stranded piece as a warning. Re-pinning a stranded piece with
 `spite pin --update` is a re-release: its existing seed links will play a different performance.
+
+## Versions
+
+A finished piece is frozen with `spite freeze`, which stores the manifest's exact bytes in the stem
+store as `<sha256>.json` and appends it to `<piece>/versions.json`:
+
+```json
+{ "versions": [{ "hash": "sha256:<hex>", "label": "v1" }] }
+```
+
+The list is oldest first, and the last entry is the latest version. Only `spite freeze` writes it,
+and only by appending: never edit, reorder or remove an entry, because links name versions by
+label. Once a piece has a version, `?piece=<id>` plays its latest version and the page writes
+`version=<label>` into the URL; `?version=v1` or `?version=<hex>` plays that version, and
+`?version=working` plays the working `manifest.json` on purpose, for previews. Editing the working
+manifest never changes a frozen version: freeze again to make a new one.

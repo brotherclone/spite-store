@@ -7,12 +7,22 @@ export interface DevResponse {
   body: Buffer | string;
 }
 
-const STEM = /^\/stems\/([0-9a-f]{64})\.(flac|mp3)$/;
+const STEM = /^\/stems\/([0-9a-f]{64})\.(flac|mp3|json)$/;
 const OLD_WAV_STEM = /^\/stems\/[0-9a-f]{64}\.wav$/;
+
+const TYPES = { flac: 'audio/flac', mp3: 'audio/mpeg', json: 'application/json' } as const;
+
+const missing = (hex: string, ext: keyof typeof TYPES) =>
+  ext === 'mp3'
+    ? `fallback recording ${hex} not found in .stems/; run spite fallback for the piece`
+    : ext === 'json'
+      ? `frozen manifest ${hex} not found in .stems/; run spite freeze for the piece, or copy ${hex}.json from the store`
+      : `stem ${hex} not found in .stems/; run pnpm stems:placeholder for the placeholder piece, or spite pack for a recorded piece`;
 
 /**
  * Resolves a development request for pieces (`/pieces/...` from `piecesDir`), stems
- * (`/stems/<hex>.flac`) or fallback recordings (`/stems/<hex>.mp3`), both from `stemsDir`. A WAV
+ * (`/stems/<hex>.flac`), fallback recordings (`/stems/<hex>.mp3`) or frozen manifests
+ * (`/stems/<hex>.json`), the last three from `stemsDir`. A WAV
  * stem name gets a 404, even when `.stems/` still holds that file. Returns null for anything else.
  */
 export async function serveDev(
@@ -24,22 +34,15 @@ export async function serveDev(
   }
   const stem = STEM.exec(pathname);
   if (stem) {
-    const [, hex, ext] = stem;
+    const [, hex, ext] = stem as unknown as [string, string, keyof typeof TYPES];
     try {
       return {
         status: 200,
-        type: ext === 'mp3' ? 'audio/mpeg' : 'audio/flac',
+        type: TYPES[ext],
         body: await readFile(resolve(dirs.stemsDir, `${hex}.${ext}`)),
       };
     } catch {
-      return {
-        status: 404,
-        type: 'text/plain',
-        body:
-          ext === 'mp3'
-            ? `fallback recording ${hex} not found in .stems/; run spite fallback for the piece`
-            : `stem ${hex} not found in .stems/; run pnpm stems:placeholder for the placeholder piece, or spite pack for a recorded piece`,
-      };
+      return { status: 404, type: 'text/plain', body: missing(hex, ext) };
     }
   }
   if (pathname.startsWith('/pieces/')) {

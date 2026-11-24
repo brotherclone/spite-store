@@ -3,6 +3,7 @@ import { EXIT_OK, EXIT_USAGE, USAGE, UsageError } from './common.js';
 import { auditionCommand } from './commands/audition.js';
 import { bounceCommand } from './commands/bounce.js';
 import { fallbackCommand } from './commands/fallback.js';
+import { freezeCommand } from './commands/freeze.js';
 import { packCommand } from './commands/pack.js';
 import { pinCommand } from './commands/pin.js';
 import { publishCommand } from './commands/publish.js';
@@ -28,6 +29,8 @@ function main(argv: string[]): number | Promise<number> {
       return publishCommand(rest);
     case 'pin':
       return pinCommand(rest);
+    case 'freeze':
+      return freezeCommand(rest);
     case '-h':
     case '--help':
     case 'help':

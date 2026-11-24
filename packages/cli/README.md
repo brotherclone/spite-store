@@ -223,3 +223,41 @@ on purpose. A stranded piece otherwise keeps playing its fallback recording on t
 ```sh
 pnpm exec spite pin pieces/the-river-forgets-to-answer/manifest.json
 ```
+
+## `spite freeze <manifest> [--label <label>] [--stems <dir>]`
+
+Freezes the manifest as an immutable version of its piece. A version is the sha256 of the
+manifest's exact bytes, so anyone can check one with `shasum -a 256`. Freezing:
+
+1. checks the manifest is valid, that its `id` matches its directory, that it is pinned to this
+   engine's formats (there is no `--ignore-pin`), and that every stem and the fallback are in the
+   stems directory with matching hashes;
+2. writes the manifest's bytes to `<stems>/<hex>.json`;
+3. uploads every stem and fallback the store lacks, then `<hex>.json` itself (`application/json`,
+   never replaced, like every stored file);
+4. appends `{ "hash": "sha256:<hex>", "label": "<label>" }` to `versions.json` beside the
+   manifest, last, so a failed upload records nothing.
+
+Labels are `v1`, `v2`, ... (one above the highest `v<n>`) unless `--label` names one: lowercase
+letters, digits, `.`, `_` and `-`, at most 32 characters, not `working` and not a 64-digit hash.
+A label is never reused or changed. Freezing bytes that are already recorded changes nothing and
+prints their label; asking for a different label for them is refused. Reformatting a manifest and
+freezing it again makes a new version.
+
+```sh
+node --env-file=.env.local packages/cli/bin/spite.js freeze pieces/the-river-forgets-to-answer/manifest.json
+```
+
+## `spite freeze --check <base-url> <manifest...>`
+
+Uploads nothing and needs no token. For every version in each piece's `versions.json` it fetches
+`<base-url><hex>.json`, checks that the bytes hash to `<hex>`, that they are a valid manifest for
+that piece, and that every file it references is reachable. A piece without `versions.json` is
+reported as unfrozen. A version pinned to other engine formats is a warning, not a failure. The
+Vercel build runs this through `scripts/deploy-check.mjs`.
+
+| Exit code | Meaning                                                                                        |
+| --------- | ---------------------------------------------------------------------------------------------- |
+| 0         | Frozen, or already frozen (`--check`: every version reachable)                                 |
+| 1         | Invalid manifest or `versions.json`, id or pin mismatch, taken or changed label, failed upload |
+| 2         | Usage error, malformed or reserved label, missing or corrupt local file, no token              |
