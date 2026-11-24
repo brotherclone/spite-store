@@ -29,7 +29,7 @@
 
 - [x] 6.1 Run the full suite: `pnpm test`, `pnpm test:browser`, `pnpm lint`, `pnpm typecheck` and `pnpm format:check`. Verify that all pass, and that the only changed golden files are the River's three traces.
 - [x] 6.2 Publish with `node --env-file=.env.local packages/cli/bin/spite.js publish pieces/*/manifest.json`, after confirming with the author. Verify that the summary uploads only the new fallback (every stem already present), and that `node scripts/deploy-check.mjs` exits 0 ("New fallback declared and published").
-- [ ] 6.3 Push for a preview, after confirming with the author. In Chromium, Firefox and WebKit, verify that the River plays placed (the author listens), its lane labels show the positions, and the placeholder is unchanged. Then merge into `develop` and `master` and confirm production serves the placed River.
+- [x] 6.3 Push for a preview, after confirming with the author. In Chromium, Firefox and WebKit, verify that the River plays placed (the author listens), its lane labels show the positions, and the placeholder is unchanged. Then merge into `develop` and `master` and confirm production serves the placed River.
 
 ## Workflow follow-up
 
