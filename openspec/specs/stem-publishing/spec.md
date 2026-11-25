@@ -46,11 +46,19 @@ Before uploading anything, `spite publish` SHALL check that every referenced fil
 - **THEN** it prints a message naming `BLOB_READ_WRITE_TOKEN`, uploads nothing, and exits 2
 
 ### Requirement: Stored files are public and immutable
-Every uploaded file SHALL be publicly readable at a stable URL `<store-base>/stems/<name>`, with no random suffix, the content type `audio/flac` for a stem or `audio/mpeg` for an MP3 fallback, and a cache lifetime of one year.
+Every uploaded file SHALL be publicly readable at a stable URL `<store-base>/stems/<name>`, with no random suffix, the content type `audio/flac` for a stem, `audio/mpeg` for an MP3 fallback or `application/json` for a frozen manifest (`<hex>.json`), and a cache lifetime of one year.
 
 #### Scenario: Uploaded file is readable
 - **WHEN** a stem has been published and `<store-base>/stems/<hex>.flac` is fetched without credentials
 - **THEN** the response is 200, its `Content-Type` is `audio/flac`, and its body hashes to `<hex>`
+
+#### Scenario: Frozen manifest is readable
+- **WHEN** a version has been frozen and `<store-base>/stems/<hex>.json` is fetched without credentials
+- **THEN** the response is 200, its `Content-Type` is `application/json`, and its body hashes to `<hex>`
+
+#### Scenario: Frozen manifest never replaced
+- **WHEN** a frozen manifest `<hex>.json` is already in the store and any `spite` command runs
+- **THEN** that file is not uploaded again, replaced or deleted
 
 ### Requirement: Reachability check
 `spite publish --check <base-url> <manifest...>` SHALL upload nothing and need no credential. For each referenced file it SHALL request `<base-url><name>`. It SHALL list every file that is not reachable with a 2xx status, by clip id and hash, and exit 1 if there are any, or 0 if all are reachable. A network error SHALL count as unreachable.
