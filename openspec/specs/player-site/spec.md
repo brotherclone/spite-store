@@ -7,7 +7,7 @@ A local web page for hearing a piece with `<spite-player>`, with shareable seed 
 ## Requirements
 
 ### Requirement: Placeholder piece page
-The site SHALL be a single page that shows `<spite-player>` for one piece under `pieces/`. A `piece` query parameter that is a valid manifest id SHALL select that piece, and a `version` parameter SHALL select its version as described in version resolution (see piece versioning). When `piece` is absent or not a valid id, the page SHALL show the default piece: the placeholder in development, and the production default piece (see site deployment) in a production build. The site SHALL be served in development by `pnpm --filter site dev`, and `pnpm --filter site build` SHALL keep succeeding.
+The site's player page, at `/`, SHALL show `<spite-player>` for one piece under `pieces/`. The site MAY have other pages, such as track pages (see track page). A `piece` query parameter that is a valid manifest id SHALL select that piece, and a `version` parameter SHALL select its version as described in version resolution (see piece versioning). When `piece` is absent or not a valid id, the page SHALL show the default piece: the placeholder in development, and the production default piece (see site deployment) in a production build. The site SHALL be served in development by `pnpm --filter site dev`, and `pnpm --filter site build` SHALL keep succeeding.
 
 #### Scenario: Page plays the placeholder
 - **WHEN** `pnpm stems:placeholder` has been run, the dev server is running and the page is opened
@@ -40,6 +40,10 @@ The site SHALL be a single page that shows `<spite-player>` for one piece under 
 #### Scenario: Unknown version
 - **WHEN** the page is opened with `version=v9` for a piece that has no `v9`
 - **THEN** the page shows an error naming the piece and `v9`, and loads no manifest into the player
+
+#### Scenario: Player page unaffected by track pages
+- **WHEN** a piece has tracks and the player page is opened with `?piece=<id>&version=v1&seed=ox-bow&bars=40`
+- **THEN** it behaves exactly as it does for a piece without tracks
 
 ### Requirement: Seed permalinks
 The page SHALL read `seed` and `bars` from its URL query and pass them to the player, using a random seed and 64 bars when absent. When the player announces a new seed or length, the page SHALL update its URL query to match without reloading or adding a history entry. Any `piece` parameter SHALL be kept. When the page is playing a frozen version, the URL SHALL name it in `version` by its label (or by its hash when it has no recorded label); when it is playing the working manifest of a frozen piece, `version` SHALL be `working`; for an unfrozen piece the URL SHALL have no `version`.
