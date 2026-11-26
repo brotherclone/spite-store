@@ -1,9 +1,11 @@
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { build } from 'vite';
 import { describe, expect, it } from 'vitest';
 import { serveDev } from '../dev-serve.js';
 
+const site = join(import.meta.dirname, '..');
 const root = mkdtempSync(join(tmpdir(), 'spite-site-'));
 const dirs = { piecesDir: join(root, 'pieces'), stemsDir: join(root, '.stems') };
 mkdirSync(join(dirs.piecesDir, 'p'), { recursive: true });
@@ -78,4 +80,76 @@ describe('development serving', () => {
     expect(await serveDev('/index.html', dirs)).toBeNull();
     expect(await serveDev('/stems/short.wav', dirs)).toBeNull();
   });
+});
+
+describe('track pages in development', () => {
+  const V1 = 'a'.repeat(64);
+  const pieces = mkdtempSync(join(tmpdir(), 'spite-site-dev-tracks-'));
+  const trackDirs = { piecesDir: pieces, stemsDir: dirs.stemsDir };
+  mkdirSync(join(pieces, 'river'));
+  writeFileSync(
+    join(pieces, 'river', 'manifest.json'),
+    JSON.stringify({ id: 'river', title: 'The River Forgets to Answer' }),
+  );
+  writeFileSync(
+    join(pieces, 'river', 'versions.json'),
+    JSON.stringify({ versions: [{ hash: `sha256:${V1}`, label: 'v1' }] }),
+  );
+  const release = (title: string) =>
+    JSON.stringify({
+      credits: [{ name: 'A. Composer', role: 'composition' }],
+      tracks: [
+        {
+          id: 'first-light',
+          title,
+          version: `sha256:${V1}`,
+          seed: 'ox-bow',
+          bars: 40,
+          audio: `sha256:${'c'.repeat(64)}`,
+          frames: 6_432_000,
+        },
+      ],
+    });
+  writeFileSync(join(pieces, 'river', 'release.json'), release('First Light'));
+  const url = '/pieces/river/tracks/first-light/';
+
+  it('serves the page as HTML, and reflects an edit to release.json on the next request', async () => {
+    const first = await serveDev(url, trackDirs);
+    expect(first).toMatchObject({ status: 200, type: 'text/html; charset=utf-8' });
+    expect(String(first!.body)).toContain('<h1>First Light</h1>');
+    writeFileSync(join(pieces, 'river', 'release.json'), release('First Light (Dawn)'));
+    const second = await serveDev(url, trackDirs);
+    expect(String(second!.body)).toContain('<h1>First Light (Dawn)</h1>');
+    writeFileSync(join(pieces, 'river', 'release.json'), release('First Light'));
+  });
+
+  it('answers an unknown track with 404', async () => {
+    expect((await serveDev('/pieces/river/tracks/nope/', trackDirs))?.status).toBe(404);
+    expect((await serveDev('/pieces/elsewhere/tracks/first-light/', trackDirs))?.status).toBe(404);
+  });
+
+  it('serves the same HTML as the production build without an origin', async () => {
+    const outDir = mkdtempSync(join(tmpdir(), 'spite-site-build-'));
+    const saved = process.env.SPITE_PIECES_DIR;
+    const savedOrigin = process.env.VITE_SITE_ORIGIN;
+    process.env.SPITE_PIECES_DIR = pieces;
+    delete process.env.VITE_SITE_ORIGIN;
+    try {
+      await build({
+        root: site,
+        configFile: join(site, 'vite.config.ts'),
+        logLevel: 'silent',
+        // Development mode, so .env.production's settings don't apply: no origin either way.
+        mode: 'development',
+        build: { outDir, emptyOutDir: true },
+      });
+    } finally {
+      if (saved === undefined) delete process.env.SPITE_PIECES_DIR;
+      else process.env.SPITE_PIECES_DIR = saved;
+      if (savedOrigin !== undefined) process.env.VITE_SITE_ORIGIN = savedOrigin;
+    }
+    const built = readFileSync(join(outDir, 'pieces/river/tracks/first-light/index.html'), 'utf8');
+    const served = await serveDev(url, trackDirs);
+    expect(String(served!.body)).toBe(built);
+  }, 120_000);
 });

@@ -174,10 +174,14 @@ pnpm exec spite fallback pieces/the-river-forgets-to-answer/manifest.json --seed
 ## `spite publish <manifest...> [--stems <dir>]`
 
 Uploads every file the manifests reference to the public stem store (Vercel Blob): the stem of
-every clip in each catalogue, not only those a seed happens to use, and each manifest's fallback.
+every clip in each catalogue, not only those a seed happens to use, each manifest's fallback, and
+the audio of every track in the `release.json` beside each manifest (named `track:<id>` in output).
 Files are stored at `stems/<hex>.flac` (`audio/flac`) or, for an MP3 fallback, `stems/<hex>.mp3`
 (`audio/mpeg`), named by content hash, publicly readable, with no random suffix and a one-year cache
 lifetime.
+
+- An invalid `release.json` is printed (path, pointer and message, as `spite validate` does) and
+  nothing is uploaded or checked.
 
 - Every file is read from the stems directory and checked against its hash **before** anything is
   uploaded. One missing or corrupt file means nothing is uploaded.
@@ -196,11 +200,11 @@ Uploads nothing and needs no token: sends `HEAD <base-url><hex>.<ext>` for every
 (one retry each) and lists each one that doesn't answer 2xx. The Vercel build runs this through
 `scripts/deploy-check.mjs`, so a deployment can't go live with a missing stem.
 
-| Exit code | Meaning                                                                     |
-| --------- | --------------------------------------------------------------------------- |
-| 0         | Every file uploaded or already present (`--check`: every file reachable)    |
-| 1         | Invalid manifest, a failed upload, or (`--check`) an unreachable file       |
-| 2         | Usage error, a missing or corrupt local file, or no `BLOB_READ_WRITE_TOKEN` |
+| Exit code | Meaning                                                                                 |
+| --------- | --------------------------------------------------------------------------------------- |
+| 0         | Every file uploaded or already present (`--check`: every file reachable)                |
+| 1         | Invalid manifest or `release.json`, a failed upload, or (`--check`) an unreachable file |
+| 2         | Usage error, a missing or corrupt local file, or no `BLOB_READ_WRITE_TOKEN`             |
 
 ## `spite pin <manifest> [--update]`
 
@@ -261,3 +265,37 @@ Vercel build runs this through `scripts/deploy-check.mjs`.
 | 0         | Frozen, or already frozen (`--check`: every version reachable)                                 |
 | 1         | Invalid manifest or `versions.json`, id or pin mismatch, taken or changed label, failed upload |
 | 2         | Usage error, malformed or reserved label, missing or corrupt local file, no token              |
+
+## `spite track <manifest> --id <id> --version <label> --seed <seed> --bars <n> --title <title> [--stems <dir>] [--update]`
+
+Cuts a track: a named, fixed performance of a frozen version, with its own page on the site. It
+resolves `--version` in `versions.json` beside the manifest, renders the frozen manifest
+`<stems>/<hex>.json` (not the working `manifest.json`) for that seed and length, exactly as
+`spite bounce` would, and writes the result as a 24-bit 48 kHz stereo FLAC to
+`<stems>/<audio-hex>.flac`. It prints the audio hash, the length and the size.
+
+The audio is quantized (clip, ×8,388,607, round half up) and encoded by the engine's own
+integer-only FLAC encoder, so the same version, seed and bars give the same bytes on any machine,
+and checking a track is exact.
+
+- With `--update` it records the track in `release.json` beside the manifest (creating the file if
+  needed, leaving everything else in it alone). Running it again with only a new `--title`
+  retitles the track. A recorded track's version, seed, bars and audio never change: asking for a
+  different one under the same `--id` prints both and is refused, so cut a new track instead.
+- Without `--update` it checks that `release.json` records the track exactly as rendered, and
+  prints any difference.
+
+`spite track` uploads nothing: `spite publish` ships the track's audio with the piece's stems. If
+`<hex>.json` isn't local, run `spite freeze` again (which writes it) or copy `/stems/<hex>.json`
+from the store.
+
+```sh
+node packages/cli/bin/spite.js track pieces/the-river-forgets-to-answer/manifest.json \
+  --id first-light --version v1 --seed ox-bow --bars 40 --title "First Light" --update
+```
+
+| Exit code | Meaning                                                                                                |
+| --------- | ------------------------------------------------------------------------------------------------------ |
+| 0         | Recorded, retitled, or (without `--update`) up to date                                                 |
+| 1         | Unknown label, invalid `versions.json` or `release.json`, pin mismatch, changed or unrecorded track    |
+| 2         | Usage error (missing option, malformed `--id` or `--bars`), frozen manifest or stem missing or corrupt |

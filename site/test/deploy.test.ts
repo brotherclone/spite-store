@@ -236,5 +236,33 @@ describe('scripts/deploy-check.mjs', () => {
       expect(r.out).toContain(join(dir, 'placeholder', 'versions.json'));
       expect(r.out).toContain('repeated label "v1"');
     });
+
+    it('fails on a track whose audio is missing from the store, naming track:<id>', async () => {
+      const { dir, hex } = frozenPieces();
+      served.set(`${hex}.json`, placeholder);
+      const audio = 'f'.repeat(64);
+      writeFileSync(
+        join(dir, 'placeholder', 'release.json'),
+        JSON.stringify({
+          tracks: [
+            {
+              id: 'first-light',
+              title: 'First Light',
+              version: `sha256:${hex}`,
+              seed: 'ox-bow',
+              bars: 40,
+              audio: `sha256:${audio}`,
+              frames: 5_880_000,
+            },
+          ],
+        }),
+      );
+      missing = `${audio}.flac`;
+      const r = await run({ SPITE_PIECES_DIR: dir });
+      expect(r.code).toBe(1);
+      expect(r.out).toContain(`track:first-light  sha256:${audio}`);
+      missing = null;
+      expect((await run({ SPITE_PIECES_DIR: dir })).code).toBe(0);
+    });
   });
 });

@@ -8,6 +8,7 @@ import { packCommand } from './commands/pack.js';
 import { pinCommand } from './commands/pin.js';
 import { publishCommand } from './commands/publish.js';
 import { realizeCommand } from './commands/realize.js';
+import { trackCommand } from './commands/track.js';
 import { validateCommand } from './commands/validate.js';
 
 function main(argv: string[]): number | Promise<number> {
@@ -31,6 +32,8 @@ function main(argv: string[]): number | Promise<number> {
       return pinCommand(rest);
     case 'freeze':
       return freezeCommand(rest);
+    case 'track':
+      return trackCommand(rest);
     case '-h':
     case '--help':
     case 'help':

@@ -6,10 +6,12 @@
   "exports": {
     ".": "./manifest.schema.json",
     "./manifest.schema.json": "./manifest.schema.json",
+    "./release.schema.json": "./release.schema.json",
     "./package.json": "./package.json"
   },
   "files": [
     "manifest.schema.json",
+    "release.schema.json",
     "examples",
     "CHANGELOG.md"
   ]
