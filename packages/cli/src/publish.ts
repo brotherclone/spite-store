@@ -1,9 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Manifest } from '@spite-store/engine';
+import type { Track } from './release.js';
 import { sha256 } from './common.js';
 
-/** One stored file: a stem, a fallback recording, or a frozen manifest. */
+/** One stored file: a stem, a fallback recording, a track's audio, or a frozen manifest. */
 export interface PublishFile {
   /**
    * The stored name: `<hex>.flac` for a stem, `<hex>.mp3` for an MP3 fallback, `<hex>.json` for
@@ -36,8 +37,14 @@ export function manifestFile(bytes: Uint8Array): PublishFile {
   };
 }
 
-/** Every catalogued clip and fallback across the manifests, one entry per file, sorted by name. */
-export function collectFiles(manifests: readonly Manifest[]): PublishFile[] {
+/**
+ * Every catalogued clip and fallback across the manifests, plus the audio of each track given
+ * (owned as `track:<id>`), one entry per file, sorted by name.
+ */
+export function collectFiles(
+  manifests: readonly Manifest[],
+  tracks: readonly Pick<Track, 'id' | 'audio'>[] = [],
+): PublishFile[] {
   const files = new Map<string, PublishFile>();
   const add = (hash: string, owner: string, contentType: PublishFile['contentType']) => {
     const name = storedName(hash, contentType);
@@ -51,6 +58,7 @@ export function collectFiles(manifests: readonly Manifest[]): PublishFile[] {
     }
     if (manifest.fallback) add(manifest.fallback.hash, 'fallback', manifest.fallback.type);
   }
+  for (const track of tracks) add(track.audio, `track:${track.id}`, 'audio/flac');
   for (const file of files.values()) file.owners.sort();
   return [...files.values()].sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
 }

@@ -51,3 +51,18 @@ Initial draft.
 - `specVersion` stays `0.1`: every existing manifest validates, realizes and renders exactly as
   before. A manifest that uses `pan` does not validate with a validator from before this addition.
 - The engine's own check now also rejects unknown slot properties, as the JSON Schema always has.
+
+## Release file
+
+`release.schema.json` describes `pieces/<id>/release.json`, a piece's release metadata kept outside
+the manifest so it can change without making a new version. It is separate from the manifest
+schema and doesn't affect how any manifest validates or realizes.
+
+- Optional `credits`: `{ name, role }` entries, both non-empty strings, in display order.
+- Optional `tracks`: `{ id, title, version, seed, bars, audio, frames }`, a named, fixed
+  performance of a frozen version. `version` and `audio` are `sha256:` hashes (the frozen manifest
+  and the track's 24-bit FLAC); `bars` and `frames` are positive integers.
+- Rules outside the schema, checked by the CLI and the site build: track ids are unique within the
+  piece, and every track's `version` is recorded in the piece's `versions.json`.
+- Examples are in `examples/release/{valid,invalid}/`, each a `release.json` with, where it has
+  tracks, a fixture `versions.json` beside it.

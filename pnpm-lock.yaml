@@ -79,9 +79,15 @@ importers:
         specifier: workspace:*
         version: link:../packages/player
     devDependencies:
+      '@spite-store/schema':
+        specifier: workspace:*
+        version: link:../schema
       '@types/node':
         specifier: ^24.19.1
         version: 24.19.1
+      ajv:
+        specifier: ^8.20.0
+        version: 8.20.0
       vite:
         specifier: ^8.3.2
         version: 8.3.2(@types/node@24.19.1)

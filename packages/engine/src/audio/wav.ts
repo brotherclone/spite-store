@@ -1,3 +1,4 @@
+import { encodeFlac } from './flac.js';
 import { SAMPLE_RATE } from './timing.js';
 
 /** Decoded stem audio: one (mono) or two (stereo) channels of equal length, as Float32. */
@@ -91,6 +92,29 @@ export function decodeWav(bytes: Uint8Array, name = 'stem'): Stem {
 export function quantize16(x: number): number {
   const clipped = x > 1 ? 1 : x < -1 ? -1 : x;
   return Math.floor(clipped * 32767 + 0.5);
+}
+
+/** Clip to [-1, 1], scale by 8388607 and round half up: the 24-bit rule for track audio. */
+export function quantize24(x: number): number {
+  const clipped = x > 1 ? 1 : x < -1 ? -1 : x;
+  return Math.floor(clipped * 8388607 + 0.5);
+}
+
+/**
+ * Encodes a stereo render as a track's audio: each sample quantized with `quantize24`, then
+ * encoded as canonical 24-bit 48 kHz FLAC. Integer-only after quantization, so the bytes are the
+ * same on every runtime.
+ */
+export function encodeTrackFlac(left: ArrayLike<number>, right: ArrayLike<number>): Uint8Array {
+  const frames = left.length;
+  if (right.length !== frames) throw new RangeError('channel lengths differ');
+  const l = new Int32Array(frames);
+  const r = new Int32Array(frames);
+  for (let f = 0; f < frames; f++) {
+    l[f] = quantize24(left[f]!);
+    r[f] = quantize24(right[f]!);
+  }
+  return encodeFlac([l, r], 24);
 }
 
 /** Encodes one or two equal-length channels as a canonical 16-bit 48 kHz PCM WAV file. */

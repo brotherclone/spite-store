@@ -1,3 +1,4 @@
+import { dirname } from 'node:path';
 import type { Manifest } from '@spite-store/engine';
 import { parse } from '../args.js';
 import { EXIT_INVALID, EXIT_OK, EXIT_USAGE, UsageError, loadManifest } from '../common.js';
@@ -10,6 +11,7 @@ import {
   type PublishFile,
   type StemStore,
 } from '../publish.js';
+import { loadRelease, printReleaseErrors, type Track } from '../release.js';
 import { DEFAULT_STEMS_DIR } from '../stems.js';
 
 export interface PublishDeps {
@@ -31,15 +33,24 @@ export async function publishCommand(argv: string[], deps: PublishDeps = {}): Pr
   }
 
   const manifests: Manifest[] = [];
+  const tracks: Track[] = [];
   let invalid = false;
   for (const file of positionals) {
     const loaded = loadManifest(file);
     if ('manifest' in loaded) manifests.push(loaded.manifest);
     else if (loaded.exit === EXIT_USAGE) return EXIT_USAGE;
     else invalid = true;
+    // The release file beside the manifest: its tracks' audio is published with the stems.
+    const release = loadRelease(dirname(file));
+    if ('errors' in release) {
+      printReleaseErrors(release.file, release.errors);
+      invalid = true;
+    } else if ('release' in release) {
+      tracks.push(...release.release.tracks);
+    }
   }
   if (invalid) return EXIT_INVALID;
-  const files = collectFiles(manifests);
+  const files = collectFiles(manifests, tracks);
 
   if (values.check !== undefined) {
     const base = values.check.endsWith('/') ? values.check : `${values.check}/`;

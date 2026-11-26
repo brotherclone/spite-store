@@ -35,7 +35,14 @@ export {
   type TraceEvent,
 } from './realize.js';
 export { CHOKE_FRAMES, SAMPLE_RATE, barFrame } from './audio/timing.js';
-export { decodeWav, encodeWav16, quantize16, type Stem } from './audio/wav.js';
+export {
+  decodeWav,
+  encodeTrackFlac,
+  encodeWav16,
+  quantize16,
+  quantize24,
+  type Stem,
+} from './audio/wav.js';
 export { decodeFlac, encodeFlac } from './audio/flac.js';
 export {
   RENDER_FORMAT,

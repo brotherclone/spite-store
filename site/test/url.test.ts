@@ -372,3 +372,43 @@ describe('versioned permalinks', () => {
     expect(later.url().href).toBe(copied);
   });
 });
+
+describe('player page with a piece that has tracks', () => {
+  const frozen = {
+    [`/pieces/${RIVER}/versions.json`]: list([V1, 'v1'], [V2, 'v2']),
+    [`/stems/${V1.hex}.json`]: V1.text,
+    [`/stems/${V2.hex}.json`]: V2.text,
+  };
+  const withTracks = {
+    ...frozen,
+    [`/pieces/${RIVER}/release.json`]: JSON.stringify({
+      tracks: [
+        {
+          id: 'first-light',
+          title: 'First Light',
+          version: `sha256:${V1.hex}`,
+          seed: 'ox-bow',
+          bars: 40,
+          audio: `sha256:${'c'.repeat(64)}`,
+          frames: 6_432_000,
+        },
+      ],
+    }),
+    [`/pieces/${RIVER}/tracks/first-light/`]: '<!doctype html>',
+  };
+  const href = `http://localhost/?piece=${RIVER}&version=v1&seed=ox-bow&bars=40`;
+
+  it('behaves exactly as it does for a piece without tracks', async () => {
+    const plain = await open(href, frozen);
+    const tracked = await open(href, withTracks);
+    expect(Object.fromEntries(tracked.attrs)).toEqual(Object.fromEntries(plain.attrs));
+    expect(tracked.attrs.get('src')).toBe(`/stems/${V1.hex}.json`);
+    expect(tracked.entries).toEqual(plain.entries);
+    expect(tracked.fetched).toEqual(plain.fetched);
+    expect(tracked.errors).toEqual([]);
+    expect(tracked.titles).toEqual(plain.titles);
+    expect(tracked.fetched.some((u) => u.includes('release.json') || u.includes('/tracks/'))).toBe(
+      false,
+    );
+  });
+});
