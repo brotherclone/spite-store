@@ -1,0 +1,12 @@
+{
+  "tracks": [
+    {
+      "id": "first-light",
+      "title": "First Light",
+      "version": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "seed": "ox-bow",
+      "bars": 40,
+      "frames": 5880000
+    }
+  ]
+}

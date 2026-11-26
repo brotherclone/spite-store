@@ -1,5 +1,7 @@
-// Fails the deployment build when a piece isn't pinned to engine formats, or when a stem or
-// fallback a piece references isn't in the stem store. A piece pinned to formats other than this
+// Fails the deployment build when a piece isn't pinned to engine formats, when a stem or
+// fallback a piece references isn't in the stem store, or when a frozen version a piece records
+// in versions.json (its manifest, or a file that manifest references) isn't, or the list itself
+// is invalid. A piece pinned to formats other than this
 // engine's only warns: it is a released piece stranded by a format bump, and plays its fallback.
 // The store's base URL is read from the /stems/:file rewrite in vercel.json, the one place it is
 // configured. SPITE_STEMS_BASE overrides it and SPITE_PIECES_DIR the pieces directory (tests point
@@ -60,12 +62,18 @@ const base =
 console.log(`checking the engine pins of ${manifests.length} piece(s)`);
 if (!checkPins()) process.exitCode = 1;
 console.log(`checking ${manifests.length} piece(s) against ${base}`);
-try {
-  execFileSync(
-    process.execPath,
-    [join(root, 'packages/cli/bin/spite.js'), 'publish', '--check', base, ...manifests],
-    { cwd: root, stdio: 'inherit' },
-  );
-} catch (error) {
-  process.exitCode = error.status ?? 1;
+/** Runs a spite command, failing the build (but carrying on) when it fails. */
+function spite(...args) {
+  try {
+    execFileSync(process.execPath, [join(root, 'packages/cli/bin/spite.js'), ...args], {
+      cwd: root,
+      stdio: 'inherit',
+    });
+  } catch (error) {
+    process.exitCode = error.status ?? 1;
+  }
 }
+
+spite('publish', '--check', base, ...manifests);
+console.log(`checking the frozen versions of ${manifests.length} piece(s) against ${base}`);
+spite('freeze', '--check', base, ...manifests);

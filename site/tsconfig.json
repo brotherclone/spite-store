@@ -4,5 +4,5 @@
     "lib": ["ES2022", "DOM"],
     "types": ["vite/client", "node"]
   },
-  "include": ["src", "test", "dev-serve.ts", "vite.config.ts"]
+  "include": ["src", "test", "dev-serve.ts", "release.ts", "vite.config.ts"]
 }

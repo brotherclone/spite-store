@@ -1,0 +1,22 @@
+{
+  "tracks": [
+    {
+      "id": "first-light",
+      "title": "First Light",
+      "version": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "seed": "ox-bow",
+      "bars": 40,
+      "audio": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "frames": 5880000
+    },
+    {
+      "id": "eddy",
+      "title": "Eddy",
+      "version": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "seed": "eddy",
+      "bars": 16,
+      "audio": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "frames": 2400000
+    }
+  ]
+}

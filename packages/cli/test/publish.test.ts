@@ -1,11 +1,11 @@
 import { execFileSync } from 'node:child_process';
-import { copyFileSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { join } from 'node:path';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { publishCommand } from '../src/commands/publish.js';
-import type { StemStore } from '../src/publish.js';
+import { manifestFile, uploadMissing, type StemStore } from '../src/publish.js';
 import { root, sha256, spite, tempDir } from './helpers.js';
 
 const river = join(root, 'pieces/the-river-forgets-to-answer/manifest.json');
@@ -234,6 +234,23 @@ describe('spite publish: uploads', () => {
   });
 });
 
+describe('frozen manifests in the store', () => {
+  it('stores a manifest as <hex>.json with content type application/json, never replaced', async () => {
+    const bytes = new Uint8Array(readFileSync(placeholder));
+    const file = manifestFile(bytes);
+    expect(file.name).toBe(`${sha256(bytes)}.json`);
+    expect(file.hash).toBe(`sha256:${sha256(bytes)}`);
+    expect(file.owners).toEqual(['manifest']);
+    const { store, files, puts } = memoryStore();
+    const first = await uploadMissing([file], new Map([[file.name, bytes]]), store);
+    expect(first.map((r) => r.status)).toEqual(['uploaded']);
+    expect(files.get(file.name)).toEqual({ bytes, contentType: 'application/json' });
+    const second = await uploadMissing([file], new Map([[file.name, bytes]]), store);
+    expect(second.map((r) => r.status)).toEqual(['present']);
+    expect(puts).toEqual([file.name]);
+  });
+});
+
 describe('spite publish --check', () => {
   let server: Server;
   let base: string;
@@ -288,5 +305,118 @@ describe('@vercel/blob is loaded lazily', () => {
     const bin = readFileSync(join(root, 'packages/cli/dist/bin.js'), 'utf8');
     expect(bin).toMatch(/import\(["']@vercel\/blob["']\)/);
     expect(bin).not.toMatch(/^import .*["']@vercel\/blob["']/m);
+  });
+});
+
+describe('track audio', () => {
+  /**
+   * A copy of the placeholder in its own piece dir, frozen as v1 (versions.json only), with a
+   * release.json recording `first-light` whose stand-in audio is written to `stemsDir`.
+   */
+  function pieceWithTrack(stemsDir: string, edit?: (release: Record<string, unknown>) => void) {
+    const dir = tempDir();
+    const manifest = join(dir, 'manifest.json');
+    copyFileSync(placeholder, manifest);
+    const version = `sha256:${sha256(readFileSync(manifest))}`;
+    writeFileSync(
+      join(dir, 'versions.json'),
+      JSON.stringify({ versions: [{ hash: version, label: 'v1' }] }),
+    );
+    const audioBytes = Buffer.from('stand-in track audio');
+    const audio = `sha256:${sha256(audioBytes)}`;
+    writeFileSync(join(stemsDir, `${hex(audio)}.flac`), audioBytes);
+    const release: Record<string, unknown> = {
+      tracks: [
+        {
+          id: 'first-light',
+          title: 'First Light',
+          version,
+          seed: 'ox-bow',
+          bars: 40,
+          audio,
+          frames: 5_880_000,
+        },
+      ],
+    };
+    edit?.(release);
+    writeFileSync(join(dir, 'release.json'), JSON.stringify(release));
+    return { manifest, audio, release: join(dir, 'release.json') };
+  }
+  const withStems = () => {
+    const dir = tempDir();
+    copyStems(placeholder, dir);
+    return dir;
+  };
+
+  it("uploads a track's audio as track:<id> when everything else is stored", async () => {
+    const dir = withStems();
+    const p = pieceWithTrack(dir);
+    const { store, files, puts } = memoryStore(
+      Object.values(clipsOf(placeholder)).map(({ hash }) => `${hex(hash)}.flac`),
+    );
+    const r = await publish([p.manifest, '--stems', dir], { store: async () => store });
+    expect(r.code, r.stderr).toBe(0);
+    expect(puts).toEqual([`${hex(p.audio)}.flac`]);
+    expect(r.stdout).toContain(`uploaded  ${hex(p.audio)}.flac  track:first-light`);
+    expect(files.get(`${hex(p.audio)}.flac`)!.contentType).toBe('audio/flac');
+  });
+
+  it('prints an invalid release file, uploads nothing and exits 1', async () => {
+    const dir = withStems();
+    const p = pieceWithTrack(dir, (release) => {
+      (release.tracks as { bars: number }[])[0]!.bars = 0;
+    });
+    const { store, puts } = memoryStore();
+    const r = await publish([p.manifest, '--stems', dir], { store: async () => store });
+    expect(r.code).toBe(1);
+    expect(r.stderr).toContain(`${p.release}  /tracks/0/bars  expected a positive integer, got 0`);
+    expect(puts).toEqual([]);
+  });
+
+  it('names a missing local track, uploads nothing and exits 2', async () => {
+    const dir = withStems();
+    const p = pieceWithTrack(dir);
+    rmSync(join(dir, `${hex(p.audio)}.flac`));
+    const { store, puts } = memoryStore();
+    const r = await publish([p.manifest, '--stems', dir], { store: async () => store });
+    expect(r.code).toBe(2);
+    expect(r.stderr).toContain(`track:first-light  ${p.audio}`);
+    expect(puts).toEqual([]);
+  });
+
+  describe('--check', () => {
+    let server: Server;
+    let base: string;
+    const present = new Set<string>();
+    beforeAll(async () => {
+      server = createServer((req, res) => {
+        const name = (req.url ?? '').replace(/^\/stems\//, '');
+        res.statusCode = present.has(name) ? 200 : 404;
+        res.end();
+      });
+      await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+      base = `http://127.0.0.1:${(server.address() as AddressInfo).port}/stems/`;
+    });
+    afterAll(() => new Promise<void>((resolve) => server.close(() => resolve())));
+
+    it('names missing track audio and exits 1', async () => {
+      const p = pieceWithTrack(tempDir());
+      for (const { hash } of Object.values(clipsOf(placeholder))) present.add(`${hex(hash)}.flac`);
+      const r = await spite('publish', '--check', base, p.manifest);
+      expect(r.code).toBe(1);
+      expect(r.stderr).toContain(`track:first-light  ${p.audio}`);
+      present.add(`${hex(p.audio)}.flac`);
+      expect((await spite('publish', '--check', base, p.manifest)).code).toBe(0);
+    });
+
+    it('fails on a release file naming an unrecorded version', async () => {
+      const p = pieceWithTrack(tempDir(), (release) => {
+        (release.tracks as { version: string }[])[0]!.version = `sha256:${'e'.repeat(64)}`;
+      });
+      const r = await spite('publish', '--check', base, p.manifest);
+      expect(r.code).toBe(1);
+      expect(r.stderr).toContain('/tracks/0/version');
+      expect(r.stderr).toContain("isn't a recorded version");
+    });
   });
 });
