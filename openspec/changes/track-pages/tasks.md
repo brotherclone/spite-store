@@ -33,7 +33,7 @@
 ## 6. Integration
 
 - [x] 6.1 Using a scratch copy of the placeholder (temp pieces and stems dirs, not `pieces/`): freeze it, cut a track with `spite track --update`, run the dev server against it, and open the track page in Chromium, Firefox and WebKit. Check that the FLAC plays, the download saves `<piece>--<track>.flac` with the recorded hash, and the live link opens the player on the same version, seed and bars ("Live link plays the same performance": compare the trace hash with `spite realize` on the frozen manifest). Don't commit anything to `pieces/`.
-- [ ] 6.2 Push the branch for a preview deployment, after confirming with the author. Check on the preview that `/pieces/<id>/tracks/<track-id>/` and the version without the trailing slash both reach the page; if the latter 404s, add `"trailingSlash": true` to `vercel.json` and recheck (D8). The preview has no real tracks unless one was published, so use a test fixture piece published to the store only with the author's approval, or skip the audio check and verify the routing alone.
+- [x] 6.2 Push the branch for a preview deployment, after confirming with the author. Check on the preview that `/pieces/<id>/tracks/<track-id>/` and the version without the trailing slash both reach the page; if the latter 404s, add `"trailingSlash": true` to `vercel.json` and recheck (D8). The preview has no real tracks unless one was published, so use a test fixture piece published to the store only with the author's approval, or skip the audio check and verify the routing alone.
 - [x] 6.3 Run `pnpm test`, `pnpm test:browser`, `pnpm lint`, `pnpm typecheck` and `pnpm format:check`, and verify that all pass with `git diff fixtures/golden` empty.
 
 ## Workflow follow-up
