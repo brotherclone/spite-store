@@ -15,6 +15,10 @@
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
     },
     {
+      "source": "/stems/(.*)\\.flac",
+      "headers": [{ "key": "Content-Disposition", "value": "attachment" }]
+    },
+    {
       "source": "/pieces/(.*)",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=300, must-revalidate" }]
     }
