@@ -12,7 +12,10 @@
   "headers": [
     {
       "source": "/stems/(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+        { "key": "Vercel-CDN-Cache-Control", "value": "no-store" }
+      ]
     },
     {
       "source": "/stems/(.*)\\.flac",
