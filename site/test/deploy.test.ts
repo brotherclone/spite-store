@@ -1,6 +1,13 @@
 import { execFile } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
@@ -29,6 +36,15 @@ describe('vercel.json', () => {
     const value = cacheFor('/stems/(.*)');
     expect(value).toContain('immutable');
     expect(Number(/max-age=(\d+)/.exec(value)?.[1])).toBeGreaterThanOrEqual(31_536_000);
+  });
+
+  it("keeps Vercel's edge from caching proxied stems", () => {
+    const values = vercel.headers
+      .filter((h) => new RegExp(`^${h.source}$`).test(`/stems/${'ab'.repeat(32)}.flac`))
+      .flatMap((h) => h.headers)
+      .filter((h) => h.key === 'Vercel-CDN-Cache-Control')
+      .map((h) => h.value);
+    expect(values).toContain('no-store');
   });
 
   it('caches manifests for at most five minutes', () => {
@@ -97,6 +113,14 @@ describe('scripts/deploy-check.mjs', () => {
 
   it('passes when every piece file is in the store', async () => {
     missing = null;
+    // A frozen version is checked against its hash, so serve each piece's working manifest under
+    // its own hash: that is the frozen manifest of a piece frozen since its last edit.
+    for (const entry of readdirSync(join(repo, 'pieces'), { withFileTypes: true })) {
+      const file = join(repo, 'pieces', entry.name, 'manifest.json');
+      if (!entry.isDirectory() || !existsSync(file)) continue;
+      const text = readFileSync(file, 'utf8');
+      served.set(`${createHash('sha256').update(text).digest('hex')}.json`, text);
+    }
     const r = await run();
     expect(r.code, r.out).toBe(0);
     const river = JSON.parse(
@@ -118,6 +142,19 @@ describe('scripts/deploy-check.mjs', () => {
     expect(r.code).toBe(1);
     expect(r.out).toContain(hash);
     expect(r.out).toContain(id);
+  });
+
+  it('fails when vercel.json lets the edge cache store stems, saying why', async () => {
+    missing = null;
+    const unsafe = structuredClone(vercel);
+    for (const rule of unsafe.headers)
+      rule.headers = rule.headers.filter((h) => h.key !== 'Vercel-CDN-Cache-Control');
+    const dir = mkdtempSync(join(tmpdir(), 'spite-vercel-'));
+    writeFileSync(join(dir, 'vercel.json'), JSON.stringify(unsafe));
+    const r = await run({ SPITE_VERCEL_JSON: join(dir, 'vercel.json') });
+    expect(r.code).toBe(1);
+    expect(r.out).toMatch(/\/stems\/(ab)+\.flac doesn't get "Vercel-CDN-Cache-Control: no-store"/);
+    expect(r.out).toContain('206');
   });
 
   describe('engine pins', () => {

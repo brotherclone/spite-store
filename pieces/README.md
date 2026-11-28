@@ -72,3 +72,19 @@ so editing it never makes a new version. It is described by `schema/release.sche
   and a link into the live piece at the same version and seed.
 - `spite publish` uploads each track's FLAC along with the piece's stems, and the deploy check
   refuses an invalid `release.json` or a track whose audio isn't in the store.
+
+## After a deploy
+
+The build checks that `vercel.json` keeps Vercel's edge cache from storing `/stems/` responses,
+but it can't probe its own deployment, which isn't live yet. Once a deploy is live, run:
+
+```sh
+pnpm run check:live https://spite-store.vercel.app
+```
+
+For every frozen version, every track and each piece's first stem, it sends a range request and
+then a plain request to the file's URL with a fresh `?probe=` query (so the real URL's cache entry
+is never touched). It fails if the plain request gets anything but the whole file, which is what
+happens when an edge cache stores a range request's partial response under the URL, or if a track
+is served with a filename that would override its page's download name. For a protected preview,
+set `VERCEL_AUTOMATION_BYPASS_SECRET` to the project's protection bypass secret.
