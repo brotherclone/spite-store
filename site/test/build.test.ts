@@ -1,4 +1,11 @@
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  writeFileSync,
+} from 'node:fs';
 import { join, relative } from 'node:path';
 import { tmpdir } from 'node:os';
 import { build } from 'vite';
@@ -51,8 +58,21 @@ describe('production build', () => {
   });
 
   it('emits nothing else from pieces/', () => {
-    const files = walk(join(out, 'pieces'));
-    expect(files).toEqual(pieces.map((id) => join(id, 'manifest.json')).sort());
+    // Each piece's manifest, its version list if it has one, and a page per recorded track.
+    const expected = pieces.flatMap((id) => {
+      const dir = join(repo, 'pieces', id);
+      const release = existsSync(join(dir, 'release.json'))
+        ? (JSON.parse(readFileSync(join(dir, 'release.json'), 'utf8')) as {
+            tracks?: { id: string }[];
+          })
+        : {};
+      return [
+        join(id, 'manifest.json'),
+        ...(existsSync(join(dir, 'versions.json')) ? [join(id, 'versions.json')] : []),
+        ...(release.tracks ?? []).map((t) => join(id, 'tracks', t.id, 'index.html')),
+      ];
+    });
+    expect(walk(join(out, 'pieces'))).toEqual(expected.sort());
     expect(walk(out).filter((f) => AUDIO.test(f))).toEqual([]);
   });
 

@@ -15,7 +15,8 @@
     "format:check": "prettier --check .",
     "typecheck": "pnpm -r run typecheck",
     "stems:placeholder": "pnpm --filter @spite-store/engine run build && node scripts/stems-placeholder.mjs",
-    "golden:update": "pnpm --filter @spite-store/engine run build && node scripts/golden-update.mjs"
+    "golden:update": "pnpm --filter @spite-store/engine run build && node scripts/golden-update.mjs",
+    "check:live": "node scripts/live-check.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
